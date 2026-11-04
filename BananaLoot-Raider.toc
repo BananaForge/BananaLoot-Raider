@@ -19,3 +19,5 @@ BananaLootRaiderUI.lua
 BananaLootRaiderExtra.lua
 BananaLootRaiderZoneLoot.lua
 BananaLootRaiderPrefetch.lua
+BananaLootRaiderRaidLoot.lua
+BananaLootRaiderCode.lua

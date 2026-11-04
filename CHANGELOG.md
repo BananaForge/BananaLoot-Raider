@@ -5,6 +5,15 @@ festgehalten.
 
 ## Unreleased
 
+- Neu: Raid-Code. Der Loot-Master von BananaLoot nennt einen Raid-Code (z.B.
+  `MC-7K3Q`). Mit `/blr code [Code]` verbindet man sich, waehlt seine SR-Items
+  aus der Beute des Raids (Icon, Tooltip, Suche, Qualitaetsfilter Weiss/Gruen/
+  Blau/Episch/Orange, Hard-Reserve- und Raid-Roll-Items sind gesperrt) und sendet
+  sie per Addon-Nachricht in den Raid-Chat (ohne Raid: Gruppe, sonst Gilde).
+  Loot-Master und Stellvertreter nehmen die SR an und bestaetigen sie; der
+  Status (SR offen/geschlossen, max. SR) wird live angezeigt. Erneut senden
+  ersetzt die alte SR. Daten: `BananaLootRaiderRaidLoot.lua` (aus AtlasLoot
+  Turtle WoW Edition, mit Erlaubnis des Entwicklers).
 - Fix: Item-Icon im Roll-Sync-Popup blieb bei manchen Items ein Fragezeichen.
   Das Icon wird jetzt unabhaengig von der Position im `GetItemInfo`-Ergebnis
   gelesen (1.12: 9. Wert), und unbekannte Items werden aktiv beim Server

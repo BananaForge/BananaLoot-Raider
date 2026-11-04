@@ -93,6 +93,20 @@ database table, separate slash command).
   Raider keeps no own loot log, only the last known owner per item –
   that stays the loot master's job
 
+### SR via raid code
+
+- The loot master of [BananaLoot](https://github.com/BananaForge/BananaLoot)
+  shares a **raid code** (e.g. `MC-7K3Q`). `/blr code [code]` connects you
+- Pick your SR items from the raid's loot (icons, item tooltips, search, quality
+  filter White/Green/Blue/Epic/Orange; Hard Reserve and Raid Roll items are
+  locked) and send them
+- The SR travels as an addon message through the raid chat (without a raid:
+  party, otherwise guild), so you can submit **before the raid**. The loot master
+  and every stand-in confirm it; you see whether SR is open or closed and your
+  limit live. Sending again replaces your old SR
+- Data source: AtlasLoot Turtle WoW Edition, used with the developer's
+  permission (see `THIRD_PARTY_NOTICES.md`)
+
 ### Item preloading per instance
 
 When you enter a dungeon or raid, the addon asks the server (slowly, in the
@@ -178,6 +192,7 @@ under Options.
 |---|---|
 | `/blr` | Open/close the shared loot history |
 | `/blr sr` | Open the SR send window (sr/unsr via shift-click) |
+| `/blr code [code]` | Enter a raid code and submit SR from the raid's loot |
 | `/blr options` | Open settings |
 | `/blr help` | Show the command legend |
 
@@ -227,6 +242,8 @@ BananaLootRaider.lua       Core: SavedVariables, locales, Roll-Sync receive,
 BananaLootRaiderUI.lua     Roll-Sync popup, shared loot history, SR send
                             window, minimap button
 BananaLootRaiderExtra.lua  Options and command legend window
+BananaLootRaiderRaidLoot.lua Raid -> boss -> item IDs for the raid code SR window (generated)
+BananaLootRaiderCode.lua   Raid code: connect to the loot master, pick and send SR
 Icons/                     TGA textures loaded in-game
 assets/                    Images for this README only (not shipped)
 ```

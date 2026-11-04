@@ -24,6 +24,11 @@ loot tables of AtlasLoot Turtle WoW Edition and used with permission of its
 developer. It is only used to preload item information from the game server.
 `tools/gen_zone_loot.py` regenerates the file from an AtlasLoot copy.
 
+`BananaLootRaiderRaidLoot.lua` (raid -> boss -> item IDs, plus name/quality/icon
+for items missing from the bundled item database) is generated from the same
+AtlasLoot data (script `tools/gen_raid_loot.py` in BananaLoot) and used with the
+same permission. It is only used to show the item selection of the SR window.
+
 ## Separation of Licenses
 
 The MIT License included in this repository applies to the original BananaLoot

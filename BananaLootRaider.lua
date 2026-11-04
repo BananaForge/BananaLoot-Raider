@@ -31,6 +31,40 @@ BananaLootRaider.EnsureDB = EnsureDB
 -- ============================================================
 local LOCALE = {
     de = {
+        SR_WIN_TITLE = "SR einreichen (Raid-Code)",
+        SR_CODE_LABEL = "Raid-Code:",
+        SR_CONNECT = "Verbinden",
+        SR_SEND = "SR senden",
+        SR_CLEAR = "Auswahl leeren",
+        SR_HINT = "Code vom Loot-Master eingeben, Items abhaken (Maus ueber ein Item zeigt den Tooltip) und \"SR senden\". Erneut senden ersetzt deine alte SR.",
+        SR_SEARCH = "Suche:",
+        SR_QUAL_LABEL = "Qualitaet:",
+        SR_QUAL_1 = "Weiss",
+        SR_QUAL_2 = "Gruen",
+        SR_QUAL_3 = "Blau",
+        SR_QUAL_4 = "Episch",
+        SR_QUAL_5 = "Orange",
+        SR_ALL_BOSSES = "Alle Bosse",
+        SR_COUNT = "SR: %d/%d",
+        SR_TAG_HR = "Hard Reserve",
+        SR_TAG_RR = "Raid-Roll",
+        SR_STATUS_NONE = "Nicht verbunden. Code vom Loot-Master eingeben.",
+        SR_STATUS_WAIT = "Frage Raid %s an ...",
+        SR_STATUS_UNKNOWN = "Keine Antwort fuer %s. Erneut verbinden.",
+        SR_STATUS_OPEN = "%s: SR offen (max. %d)",
+        SR_STATUS_CLOSED = "%s: SR geschlossen",
+        SR_NEED_CODE = "|cffff5555BananaLoot Raider|r: Bitte zuerst einen Raid-Code eingeben und verbinden.",
+        SR_NO_CHANNEL = "|cffff5555BananaLoot Raider|r: Weder Raid/Gruppe noch Gilde: kein Kanal fuer den Raid-Code.",
+        SR_NO_ANSWER = "|cffff5555BananaLoot Raider|r: Keine Antwort fuer Code %s. Ist der Loot-Master (oder Stellvertreter) online im Raid/in der Gruppe/Gilde?",
+        SR_SENT = "|cff33ff99BananaLoot Raider|r: SR gesendet: %d Item(s) fuer %s. Warte auf Bestaetigung ...",
+        SR_ACK_OK = "|cff33ff99BananaLoot Raider|r: SR bestaetigt: %d Item(s)%s.",
+        SR_ACK_SKIP = " (%d uebersprungen: Hard Reserve/Raid-Roll)",
+        SR_ACK_CLOSED = "|cffff5555BananaLoot Raider|r: SR abgelehnt: Die SR-Liste ist geschlossen.",
+        SR_ACK_LIMIT = "|cffff5555BananaLoot Raider|r: SR abgelehnt: zu viele Items (max. %d).",
+        SR_ACK_OTHER = "|cffff5555BananaLoot Raider|r: SR abgelehnt (%s).",
+        SR_LIMIT_MSG = "|cffff5555BananaLoot Raider|r: Maximal %d SR-Item(s) erlaubt. Erst eines abwaehlen.",
+        SR_TIP_ILVL = "Item-Level %d",
+        SR_TIP_UNCACHED = "Details noch nicht im Client-Cache. Sie werden beim Betreten der Instanz geladen.",
         MSG_ADDON_LOADED = "|cff33ff99BananaLoot Raider|r geladen. /blr oeffnet die Loot-Historie, /blr help zeigt alle Befehle.",
 
         -- Roll-Sync-Popup
@@ -104,6 +138,7 @@ local LOCALE = {
         CMD_LEGEND_TEXT = "=== SLASH-BEFEHLE (Raider) ===\n" ..
             "/blr                   Loot-Historie oeffnen/schliessen\n" ..
             "/blr sr                SR-Sende-Fenster oeffnen (sr/unsr per Shift-Klick)\n" ..
+            "/blr code [Code]       Raid-Code eingeben und SR aus der Raid-Beute einreichen\n" ..
             "/blr options           Einstellungen oeffnen\n" ..
             "/blr help              Diese Uebersicht anzeigen\n" ..
             "\n" ..
@@ -117,7 +152,7 @@ local LOCALE = {
             "/roll                  Hauptspec (1-100)\n" ..
             "/roll 1 99             Off-Spec\n" ..
             "/roll 1 98             Transmog",
-        CMD_HELP = "|cff33ff99BananaLoot Raider|r Befehle: /blr, /blr sr, /blr options, /blr help",
+        CMD_HELP = "|cff33ff99BananaLoot Raider|r Befehle: /blr, /blr sr, /blr code [Code], /blr options, /blr help",
 
         -- Minimap
         MM_TOOLTIP_LEFT = "Linksklick: Loot-Historie oeffnen",
@@ -127,6 +162,40 @@ local LOCALE = {
     },
 
     en = {
+        SR_WIN_TITLE = "Submit SR (raid code)",
+        SR_CODE_LABEL = "Raid code:",
+        SR_CONNECT = "Connect",
+        SR_SEND = "Send SR",
+        SR_CLEAR = "Clear selection",
+        SR_HINT = "Enter the loot master's code, tick your items (hover an item for its tooltip) and \"Send SR\". Sending again replaces your old SR.",
+        SR_SEARCH = "Search:",
+        SR_QUAL_LABEL = "Quality:",
+        SR_QUAL_1 = "White",
+        SR_QUAL_2 = "Green",
+        SR_QUAL_3 = "Blue",
+        SR_QUAL_4 = "Epic",
+        SR_QUAL_5 = "Orange",
+        SR_ALL_BOSSES = "All bosses",
+        SR_COUNT = "SR: %d/%d",
+        SR_TAG_HR = "Hard Reserve",
+        SR_TAG_RR = "Raid Roll",
+        SR_STATUS_NONE = "Not connected. Enter the code from the loot master.",
+        SR_STATUS_WAIT = "Asking raid %s ...",
+        SR_STATUS_UNKNOWN = "No answer for %s. Connect again.",
+        SR_STATUS_OPEN = "%s: SR open (max. %d)",
+        SR_STATUS_CLOSED = "%s: SR closed",
+        SR_NEED_CODE = "|cffff5555BananaLoot Raider|r: Please enter a raid code and connect first.",
+        SR_NO_CHANNEL = "|cffff5555BananaLoot Raider|r: Neither raid/party nor guild: no channel for the raid code.",
+        SR_NO_ANSWER = "|cffff5555BananaLoot Raider|r: No answer for code %s. Is the loot master (or stand-in) online in the raid/party/guild?",
+        SR_SENT = "|cff33ff99BananaLoot Raider|r: SR sent: %d item(s) for %s. Waiting for confirmation ...",
+        SR_ACK_OK = "|cff33ff99BananaLoot Raider|r: SR confirmed: %d item(s)%s.",
+        SR_ACK_SKIP = " (%d skipped: Hard Reserve/Raid Roll)",
+        SR_ACK_CLOSED = "|cffff5555BananaLoot Raider|r: SR rejected: the SR list is closed.",
+        SR_ACK_LIMIT = "|cffff5555BananaLoot Raider|r: SR rejected: too many items (max. %d).",
+        SR_ACK_OTHER = "|cffff5555BananaLoot Raider|r: SR rejected (%s).",
+        SR_LIMIT_MSG = "|cffff5555BananaLoot Raider|r: At most %d SR item(s) allowed. Deselect one first.",
+        SR_TIP_ILVL = "Item level %d",
+        SR_TIP_UNCACHED = "Details not in the client cache yet. They are loaded when you enter the instance.",
         MSG_ADDON_LOADED = "|cff33ff99BananaLoot Raider|r loaded. /blr opens the loot history, /blr help shows all commands.",
 
         RSWIN_TITLE = "BananaLoot Raider - Roll",
@@ -195,6 +264,7 @@ local LOCALE = {
         CMD_LEGEND_TEXT = "=== SLASH COMMANDS (Raider) ===\n" ..
             "/blr                   Open/close loot history\n" ..
             "/blr sr                Open the SR send window (sr/unsr via shift-click)\n" ..
+            "/blr code [Code]       Enter a raid code and submit SR from the raid loot\n" ..
             "/blr options           Open settings\n" ..
             "/blr help              Show this legend\n" ..
             "\n" ..
@@ -208,7 +278,7 @@ local LOCALE = {
             "/roll                  Main Spec (1-100)\n" ..
             "/roll 1 99             Off-Spec\n" ..
             "/roll 1 98             Transmog",
-        CMD_HELP = "|cff33ff99BananaLoot Raider|r Commands: /blr, /blr sr, /blr options, /blr help",
+        CMD_HELP = "|cff33ff99BananaLoot Raider|r Commands: /blr, /blr sr, /blr code [Code], /blr options, /blr help",
 
         MM_TOOLTIP_LEFT = "Left-click: open loot history",
         MM_TOOLTIP_RIGHT = "Right-click: settings",
@@ -719,7 +789,10 @@ eventFrame:SetScript("OnEvent", function()
 
     elseif event == "CHAT_MSG_ADDON" then
         if arg1 == ROLL_SYNC_PREFIX then
-            BananaLootRaider:HandleRollSyncMessage(arg2, arg4)
+            -- Raid-Code-Antworten (SR-Status/-Bestaetigung, siehe BananaLootRaiderCode.lua)
+            if not (BananaLootRaider.HandleCodeMessage and BananaLootRaider:HandleCodeMessage(arg2, arg4, arg3)) then
+                BananaLootRaider:HandleRollSyncMessage(arg2, arg4)
+            end
         end
 
     elseif event == "RAID_ROSTER_UPDATE" or event == "PARTY_MEMBERS_CHANGED" then
@@ -753,6 +826,10 @@ SlashCmdList["BANANALOOTRAIDER"] = function(msg)
 
     if cmd == "sr" then
         if BananaLootRaider_UI and BananaLootRaider_UI.ToggleSR then BananaLootRaider_UI:ToggleSR() end
+
+    elseif cmd == "code" or string.find(cmd, "^code ") then
+        local code = Trim(string.sub(msg, 5))
+        if BananaLootRaider.ShowRaidCode then BananaLootRaider:ShowRaidCode(code) end
 
     elseif cmd == "options" or cmd == "config" then
         if BananaLootRaider_UI and BananaLootRaider_UI.ToggleOptions then BananaLootRaider_UI:ToggleOptions() end

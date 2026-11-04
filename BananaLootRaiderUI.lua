@@ -859,6 +859,7 @@ end)
 -- 8) ZENTRALER SPRACH-EINSTIEGSPUNKT (auch fuer Extra.lua)
 -- ============================================================
 function BananaLootRaider_UI:ApplyLocaleAll()
+    if BananaLootRaider.ApplyLocaleCode then BananaLootRaider:ApplyLocaleCode() end
     if self.ApplyLocale then self:ApplyLocale() end
     if self.ApplyLocaleExtra then self:ApplyLocaleExtra() end
 end
