@@ -10,8 +10,10 @@
 -- Protokoll: siehe BananaLootRaidCode.lua in BananaLoot (Praefix "BananaLoot").
 --   gesendet:  SQ~code            Status + Listen anfragen
 --              SR~code~spieler~id,id   komplette SR-Liste (ersetzt die alte)
+--              SW                    "welcher Raid laeuft in meiner Gruppe?" (nur RAID/PARTY)
 --   empfangen: SS~code~O|C~max~raid~name   SR offen/geschlossen, max. SR
---              SH~code~H|R~id,id,...        Hard-Reserve- bzw. Raid-Roll-Items (gesperrt)
+--              SH~code~H|R|B~id,id,...      Hard-Reserve-, Raid-Roll- bzw. Bankreserve-Items (gesperrt)
+--              SC~code~name~O|C             aktiver Raid der Gruppe (Antwort auf SW, Auto-Verbindung)
 --              SA~code~spieler~OK|ERR~...   Bestaetigung / Ablehnung
 --
 -- Lua 5.0: kein #-Operator, kein %-Operator, kein string.gmatch/match, Events ueber
@@ -40,6 +42,8 @@ local R = {
     entries = {},
     rows = {},
     bossRows = {},
+    auto = false,      -- Code wurde automatisch aus der Gruppe uebernommen
+    lastAuto = 0,      -- Zeit der letzten SW-Anfrage
     waiting = nil,     -- "status" | "ack"
     waitUntil = 0,
     loading = false,
@@ -137,6 +141,7 @@ end
 
 function R.Blocked(id)
     if R.status then
+        if R.status.br and R.status.br[id] then return "SR_TAG_BR" end
         if R.status.hr[id] then return "SR_TAG_HR" end
         if R.status.rr[id] then return "SR_TAG_RR" end
     end
@@ -170,13 +175,34 @@ end
 -- 2) NACHRICHTEN
 -- ============================================================
 function BananaLootRaider:HandleCodeMessage(text, sender, channel)
-    if not text or string.sub(text, 3, 3) ~= "~" then return false end
+    -- Kurznachrichten (SW, HQ) bestehen nur aus dem Typ, alle anderen haben "~" an Stelle 3
+    if not text or (string.len(text) > 2 and string.sub(text, 3, 3) ~= "~") then return false end
     local t = string.sub(text, 1, 2)
-    if t ~= "SS" and t ~= "SH" and t ~= "SA" and t ~= "SR" and t ~= "SQ" and t ~= "SJ" and t ~= "SD" then
+    if t ~= "SS" and t ~= "SH" and t ~= "SA" and t ~= "SR" and t ~= "SQ" and t ~= "SJ" and t ~= "SD"
+        and t ~= "SW" and t ~= "SC" and t ~= "HQ" and t ~= "HA" and t ~= "HO" then
         return false
     end
-    if t == "SR" or t == "SQ" or t == "SJ" or t == "SD" then return true end   -- nur fuer BananaLoot
+    -- nur fuer BananaLoot bestimmt
+    if t == "SR" or t == "SQ" or t == "SJ" or t == "SD" or t == "SW" or t == "HQ" or t == "HA" or t == "HO" then
+        return true
+    end
     local fields = Split(text, "~")
+
+    -- SC: BananaLoot meldet den aktiven Raid der Gruppe. Nur ueber Raid/Gruppe akzeptieren (nie
+    -- ueber die Gilde): der Kanal beweist, dass der Absender in meiner Gruppe ist.
+    if t == "SC" then
+        if channel ~= "RAID" and channel ~= "PARTY" then return true end
+        local newCode = Normalize(fields[2])
+        if newCode == "" or newCode == R.code then return true end
+        if R.code == "" or R.auto then
+            R.code = ""   -- Auswahl des alten Raids verwerfen
+            R.status = nil
+            R.auto = true
+            Say("SR_AUTO", fields[3] or newCode)
+            R.Connect(newCode, true)
+        end
+        return true
+    end
     local code = Normalize(fields[2])
     if code ~= R.code then return true end
 
@@ -195,7 +221,11 @@ function BananaLootRaider:HandleCodeMessage(text, sender, channel)
         if R.frame:IsShown() then R.Refresh() end
     elseif t == "SH" then
         if R.status then
-            local target = (fields[3] == "H") and R.status.hr or R.status.rr
+            local target = R.status.rr
+            if fields[3] == "H" then target = R.status.hr elseif fields[3] == "B" then
+                if not R.status.br then R.status.br = {} end
+                target = R.status.br
+            end
             local ids = IdsToList(fields[4])
             for i = 1, table.getn(ids) do target[ids[i]] = true end
             -- gesperrte Items aus der Auswahl nehmen
@@ -224,8 +254,9 @@ function BananaLootRaider:HandleCodeMessage(text, sender, channel)
     return true
 end
 
-function R.Connect(code)
+function R.Connect(code, auto)
     code = Normalize(code)
+    if not auto then R.auto = false end   -- von Hand eingegebener Code bleibt
     if code == "" then
         Say("SR_NEED_CODE")
         return
@@ -276,6 +307,38 @@ function R.Send()
     R.watch:Show()
     R.Refresh()
 end
+
+-- Automatische Raid-Erkennung: in einer Gruppe/einem Raid fragt der Raider im Hintergrund
+-- "welcher BananaLoot-Raid laeuft hier?" (SW). Antwortet ein Loot-Master mit SC, verbindet er
+-- sich selbst -- kein Abschreiben des Codes noetig. Ein von Hand eingegebener Code bleibt.
+function R.AutoSync(force)
+    local channel
+    if GetNumRaidMembers() > 0 then channel = "RAID" elseif GetNumPartyMembers() > 0 then channel = "PARTY" end
+    if not channel then return end
+    if R.code ~= "" and not R.auto then return end          -- von Hand verbunden
+    local now = GetTime()
+    if not force and (now - R.lastAuto) < 20 then return end
+    R.lastAuto = now
+    pcall(function() SendAddonMessage(PREFIX, "SW", channel) end)
+end
+
+R.autoDelay = nil
+R.ev = CreateFrame("Frame", "BananaLootRaiderCodeEvents")
+R.ev:RegisterEvent("PLAYER_ENTERING_WORLD")
+R.ev:RegisterEvent("RAID_ROSTER_UPDATE")
+R.ev:RegisterEvent("PARTY_MEMBERS_CHANGED")
+R.ev:SetScript("OnEvent", function()
+    R.autoDelay = 4        -- kurz warten, bis sich die Gruppe gesetzt hat
+    R.ev:Show()
+end)
+R.ev:SetScript("OnUpdate", function()
+    if not R.autoDelay then return end
+    R.autoDelay = R.autoDelay - arg1
+    if R.autoDelay <= 0 then
+        R.autoDelay = nil
+        R.AutoSync(false)
+    end
+end)
 
 -- Zeitueberwachung fuer Antworten
 R.watch = CreateFrame("Frame", "BananaLootRaiderCodeWatch")
@@ -716,6 +779,7 @@ function BananaLootRaider:ShowRaidCode(code)
     R.loading = false
     F:Show()
     R.Refresh()
+    if R.code == "" or R.auto then R.AutoSync(true) end
 end
 
 function BananaLootRaider:ApplyLocaleCode()

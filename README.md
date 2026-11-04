@@ -104,6 +104,12 @@ database table, separate slash command).
   party, otherwise guild), so you can submit **before the raid**. The loot master
   and every stand-in confirm it; you see whether SR is open or closed and your
   limit live. Sending again replaces your old SR
+- **Automatic connection:** in a party or raid with a BananaLoot loot master the
+  addon detects the active raid by itself (only via raid/party chat, never
+  guild) and connects with its raid code. A code you typed by hand is kept
+- Open the window with the **Submit SR** button next to *Options* in the main
+  window or with `/blr code`. The *Whisper SR* button is the older whisper
+  window
 - Data source: AtlasLoot Turtle WoW Edition, used with the developer's
   permission (see `THIRD_PARTY_NOTICES.md`)
 

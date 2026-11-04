@@ -31,6 +31,11 @@ BananaLootRaider.EnsureDB = EnsureDB
 -- ============================================================
 local LOCALE = {
     de = {
+        SR_TAG_BR = "Bankreserve",
+        SR_AUTO = "|cff33ff99BananaLoot Raider|r: BananaLoot-Raid %s in deiner Gruppe erkannt, verbinde automatisch ...",
+        UI_BTN_SR_SUBMIT = "SR einreichen",
+        UI_BTN_SR_SUBMIT_TOOLTIP = "SR fuer den Raid des Loot-Masters einreichen (Raid-Code, wird in der Gruppe automatisch erkannt)",
+        UI_BTN_SR_WHISPER = "Whisper-SR",
         SR_WIN_TITLE = "SR einreichen (Raid-Code)",
         SR_CODE_LABEL = "Raid-Code:",
         SR_CONNECT = "Verbinden",
@@ -162,6 +167,11 @@ local LOCALE = {
     },
 
     en = {
+        SR_TAG_BR = "Bank Reserve",
+        SR_AUTO = "|cff33ff99BananaLoot Raider|r: BananaLoot raid %s detected in your group, connecting automatically ...",
+        UI_BTN_SR_SUBMIT = "Submit SR",
+        UI_BTN_SR_SUBMIT_TOOLTIP = "Submit SR for the loot master's raid (raid code, detected automatically in your group)",
+        UI_BTN_SR_WHISPER = "Whisper SR",
         SR_WIN_TITLE = "Submit SR (raid code)",
         SR_CODE_LABEL = "Raid code:",
         SR_CONNECT = "Connect",

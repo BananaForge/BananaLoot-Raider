@@ -5,6 +5,15 @@ festgehalten.
 
 ## Unreleased
 
+- Neu: Automatische Raid-Erkennung. In einer Gruppe/einem Raid fragt der Raider im
+  Hintergrund, welcher BananaLoot-Raid dort laeuft, und verbindet sich mit dessen
+  Raid-Code selbst (nur ueber Raid-/Gruppenchat, nie ueber die Gilde). Ein von
+  Hand eingegebener Code bleibt bestehen.
+- Neu: Button "SR einreichen" neben "Optionen" im Hauptfenster (oeffnet dasselbe
+  Fenster wie `/blr code`). Das bisherige Whisper-Fenster heisst jetzt "Whisper-SR".
+- Neu: Bankreserve-Items des Raids sind im SR-Fenster gesperrt.
+- Fix: Der "?"-Button im Hauptfenster haengte an einem erst spaeter erzeugten Button
+  und sass am Fensterrand; die obere Buttonzeile ist jetzt sauber verkettet.
 - Geaendert: Alle Fenster haben jetzt einen dunklen, fast deckenden Hintergrund
   (besser lesbar, keine durchscheinenden Texte anderer Fenster) und werden beim
   Anklicken/Oeffnen komplett nach oben geholt. Ebenen vereinheitlicht: Roll-Sync-
