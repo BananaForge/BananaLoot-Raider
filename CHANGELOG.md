@@ -5,6 +5,13 @@ festgehalten.
 
 ## Unreleased
 
+- Fix: Item-Icon im Roll-Sync-Popup blieb bei manchen Items ein Fragezeichen.
+  Das Icon wird jetzt unabhaengig von der Position im `GetItemInfo`-Ergebnis
+  gelesen (1.12: 9. Wert), und unbekannte Items werden aktiv beim Server
+  angefragt, statt nur zu warten.
+- Neu: Faehrt man mit der Maus ueber ein Fragezeichen-Icon im Popup, wird das
+  Item erneut beim Server angefragt und das Icon einige Sekunden lang neu
+  geladen.
 - Neu: Item-Vorladen pro Instanz. Beim Betreten eines Dungeons/Raids
   fragt das Addon alle dort droppenden Items, die der Client noch nicht
   kennt, gedrosselt (4 pro Sekunde) per unsichtbarem Tooltip beim Server

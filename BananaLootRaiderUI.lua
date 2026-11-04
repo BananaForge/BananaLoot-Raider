@@ -18,6 +18,27 @@ end
 
 local function AttachIconTooltip(row)
     row.iconFrame:SetScript("OnEnter", function()
+        -- Fallback fuer Fragezeichen-Icons: Beim Drueberfahren das Item
+        -- erneut aktiv beim Server anfragen und das Icon danach ein paar
+        -- Sekunden lang neu aufloesen, bis die Textur da ist.
+        if row.getItemID and row.refresh then
+            local id = row.getItemID()
+            if id then
+                BananaLootRaider:QueryItem(id, true)
+                row.hoverLeft = 4
+                row.hoverTick = 0
+                row.iconFrame:SetScript("OnUpdate", function()
+                    row.hoverTick = row.hoverTick + arg1
+                    if row.hoverTick < 0.5 then return end
+                    row.hoverTick = 0
+                    row.hoverLeft = row.hoverLeft - 0.5
+                    row.refresh()
+                    if row.hoverLeft <= 0 or BananaLootRaider:GetItemTexture(id) then
+                        row.iconFrame:SetScript("OnUpdate", nil)
+                    end
+                end)
+            end
+        end
         if row.currentLink and string.find(row.currentLink, "|Hitem:") then
             GameTooltip:SetOwner(row.iconFrame, "ANCHOR_RIGHT")
             local _, _, raw = string.find(row.currentLink, "item:([%d:%-]+)")
@@ -27,7 +48,10 @@ local function AttachIconTooltip(row)
             GameTooltip:Show()
         end
     end)
-    row.iconFrame:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    row.iconFrame:SetScript("OnLeave", function()
+        row.iconFrame:SetScript("OnUpdate", nil)
+        GameTooltip:Hide()
+    end)
 end
 
 -- ============================================================
@@ -73,6 +97,9 @@ rsIconFrame:SetHeight(28)
 rsIconFrame:SetPoint("TOPLEFT", rollSyncFrame, "TOPLEFT", 16, -36)
 rsIconFrame:EnableMouse(true)
 local rsIconRow = { iconFrame = rsIconFrame, currentLink = nil }
+local rollSyncState, RefreshRollSyncPopup -- Vorwaertsdeklaration (unten befuellt)
+rsIconRow.getItemID = function() return rollSyncState and rollSyncState.itemID end
+rsIconRow.refresh = function() if RefreshRollSyncPopup then RefreshRollSyncPopup() end end
 AttachIconTooltip(rsIconRow)
 
 local rsItemText = rollSyncFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -161,7 +188,7 @@ rsTmBtn:SetScript("OnClick", function()
     RandomRoll(1, 98)
 end)
 
-local rollSyncState = {
+rollSyncState = {
     active = false,
     itemID = nil,
     mode = 0,
@@ -174,7 +201,7 @@ local rollSyncState = {
     hideAt = nil,
 }
 
-local function RefreshRollSyncPopup()
+function RefreshRollSyncPopup()
     if not rollSyncState.active then return end
 
     local icon = BananaLootRaider:ResolveItemIcon(rollSyncState.itemID)
