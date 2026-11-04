@@ -739,6 +739,13 @@ SlashCmdList["BANANALOOTRAIDER"] = function(msg)
     elseif cmd == "options" or cmd == "config" then
         if BananaLootRaider_UI and BananaLootRaider_UI.ToggleOptions then BananaLootRaider_UI:ToggleOptions() end
 
+    elseif cmd == "prefetch" then
+        BananaLootRaider:PrefetchZoneItems(GetRealZoneText(), true)
+
+    elseif cmd == "prefetch off" or cmd == "prefetch on" then
+        BananaLootRaider:SetPrefetchEnabled(cmd == "prefetch on")
+        DEFAULT_CHAT_FRAME:AddMessage("|cff33ff99BananaLoot Raider|r: Prefetch " .. (cmd == "prefetch on" and "on" or "off"))
+
     elseif cmd == "help" then
         if BananaLootRaider_UI and BananaLootRaider_UI.ShowHelp then BananaLootRaider_UI:ShowHelp() end
 

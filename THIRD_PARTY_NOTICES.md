@@ -17,6 +17,13 @@ Bananaforge Luminar. It is the same underlying dataset shipped with BananaLoot
 (`BananaLootRaider_ItemDB`) to avoid a naming collision when both addons are
 loaded together.
 
+## Instance Loot Data
+
+`BananaLootRaiderZoneLoot.lua` (instance -> item IDs) is generated from the
+loot tables of AtlasLoot Turtle WoW Edition and used with permission of its
+developer. It is only used to preload item information from the game server.
+`tools/gen_zone_loot.py` regenerates the file from an AtlasLoot copy.
+
 ## Separation of Licenses
 
 The MIT License included in this repository applies to the original BananaLoot

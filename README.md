@@ -93,6 +93,15 @@ database table, separate slash command).
   Raider keeps no own loot log, only the last known owner per item –
   that stays the loot master's job
 
+### Item preloading per instance
+
+When you enter a dungeon or raid, the addon asks the server (slowly, in the
+background, ~4 items/second) for every item that can drop there and that your
+client doesn't know yet. This way the Blizzard roll window shows icon and
+tooltip instead of a question mark. `/blr prefetch` runs it manually for the
+current zone, `/blr prefetch on|off` toggles it. Data source: AtlasLoot Turtle
+WoW Edition (used with the developer's permission).
+
 ### Static item database
 
 - Ships with the same static item database as BananaLoot (~14,230

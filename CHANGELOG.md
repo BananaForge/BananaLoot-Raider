@@ -5,6 +5,14 @@ festgehalten.
 
 ## Unreleased
 
+- Neu: Item-Vorladen pro Instanz. Beim Betreten eines Dungeons/Raids
+  fragt das Addon alle dort droppenden Items, die der Client noch nicht
+  kennt, gedrosselt (4 pro Sekunde) per unsichtbarem Tooltip beim Server
+  ab. Dadurch zeigt das Blizzard-Wuerfelfenster beim Looten Icon und
+  Tooltip statt eines Fragezeichens. Daten: `BananaLootRaiderZoneLoot.lua`
+  (aus AtlasLoot Turtle WoW Edition, mit Erlaubnis des Entwicklers,
+  erzeugt mit `tools/gen_zone_loot.py`). Befehle: `/blr prefetch`
+  (manuell fuer die aktuelle Zone), `/blr prefetch on|off`.
 - README auf Englisch umgestellt und an Struktur/Branding von
   [BananaLoot](https://github.com/BaregBananenrepublik/BananaLoot)
   angeglichen (Banner, "Part of BananaForge", Credits-Abschnitt mit
