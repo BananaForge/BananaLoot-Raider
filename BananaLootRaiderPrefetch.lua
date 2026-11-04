@@ -154,6 +154,20 @@ function BananaLootRaider:PrefetchZoneItems(zone, verbose)
     return total
 end
 
+-- Einzelnes Item sofort beim Server anfragen (fuer Popup/Historie). Pro Item
+-- hoechstens alle 5 Sekunden, force=true ueberspringt nur diese Sperre.
+local lastQuery = {}
+function BananaLootRaider:QueryItem(id, force)
+    if not id or IsKnown(id) then return end
+    local now = GetTime()
+    if lastQuery[id] and now - lastQuery[id] < 5 then return end
+    lastQuery[id] = now
+    pcall(function()
+        tip:SetOwner(WorldFrame, "ANCHOR_NONE")
+        tip:SetHyperlink("item:" .. id .. ":0:0:0:0:0:0:0")
+    end)
+end
+
 function BananaLootRaider:SetPrefetchEnabled(on)
     if not BananaLootRaider_DB then BananaLootRaider_DB = {} end
     if not BananaLootRaider_DB.settings then BananaLootRaider_DB.settings = {} end

@@ -445,10 +445,25 @@ local function GetBagIconForItem(itemID)
     return nil
 end
 
+-- Textur aus GetItemInfo. Die Position des Icons unterscheidet sich je nach
+-- Client: in 1.12 ist es der 9. Rueckgabewert (kein itemLevel), in neueren
+-- Clients der 10. Der Index wird daher nicht fest angenommen, sondern das
+-- erste Ergebnis genommen, das wie ein Icon-Pfad aussieht.
+function BananaLootRaider:GetItemTexture(id)
+    local r = { GetItemInfo("item:" .. id .. ":0:0:0:0:0:0:0") }
+    for i = 8, 10 do
+        local v = r[i]
+        if type(v) == "string" and string.find(string.lower(v), "^interface") then
+            return v
+        end
+    end
+    return nil
+end
+
 BananaLootRaider.pendingIcons = {} -- [itemID] = Anzahl bisheriger Versuche
 
 function BananaLootRaider:ResolveItemIcon(id)
-    local _, _, _, _, _, _, _, _, _, itemTexture = GetItemInfo("item:" .. id .. ":0:0:0:0:0:0:0")
+    local itemTexture = self:GetItemTexture(id)
     local bagIcon = GetBagIconForItem(id)
     local staticInfo = self:GetStaticItemInfo(id)
     local staticIcon = staticInfo and staticInfo.icon or nil
@@ -484,6 +499,9 @@ function BananaLootRaider:ResolveItemIcon(id)
     if self.pendingIcons[id] == nil then
         self.pendingIcons[id] = 0
     end
+    -- Dem Client unbekanntes Item aktiv beim Server anfragen (sonst wartet
+    -- der Retry nur darauf, dass irgendwer das Item zufaellig sieht).
+    if self.QueryItem then self:QueryItem(id) end
     return "Interface\\Icons\\INV_Misc_QuestionMark"
 end
 

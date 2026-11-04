@@ -700,14 +700,15 @@ ticker:SetScript("OnUpdate", function()
 
         local needRefresh = false
         for id, tries in pairs(BananaLootRaider.pendingIcons) do
-            local _, _, _, _, _, _, _, _, _, itemTexture = GetItemInfo("item:" .. id .. ":0:0:0:0:0:0:0")
-            if type(itemTexture) == "string" and itemTexture ~= "" then
+            local itemTexture = BananaLootRaider:GetItemTexture(id)
+            if itemTexture then
                 BananaLootRaider.pendingIcons[id] = nil
                 needRefresh = true
             elseif tries >= 15 then
                 BananaLootRaider.pendingIcons[id] = nil
             else
                 BananaLootRaider.pendingIcons[id] = tries + 1
+                if BananaLootRaider.QueryItem then BananaLootRaider:QueryItem(id, true) end
             end
         end
 
