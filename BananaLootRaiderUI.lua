@@ -67,6 +67,7 @@ rollSyncFrame:SetBackdrop({
     tile = true, tileSize = 32, edgeSize = 32,
     insets = { left = 11, right = 11, top = 11, bottom = 11 },
 })
+BananaLootRaider_Theme.Darken(rollSyncFrame)
 rollSyncFrame:SetMovable(true)
 rollSyncFrame:EnableMouse(true)
 rollSyncFrame:RegisterForDrag("LeftButton")
@@ -374,6 +375,7 @@ historyFrame:SetBackdrop({
     tile = true, tileSize = 32, edgeSize = 32,
     insets = { left = 11, right = 11, top = 11, bottom = 11 },
 })
+BananaLootRaider_Theme.Darken(historyFrame)
 historyFrame:SetMovable(true)
 historyFrame:EnableMouse(true)
 historyFrame:RegisterForDrag("LeftButton")
@@ -567,6 +569,7 @@ srSendFrame:SetBackdrop({
     tile = true, tileSize = 32, edgeSize = 32,
     insets = { left = 11, right = 11, top = 11, bottom = 11 },
 })
+BananaLootRaider_Theme.Darken(srSendFrame)
 srSendFrame:SetMovable(true)
 srSendFrame:EnableMouse(true)
 srSendFrame:RegisterForDrag("LeftButton")

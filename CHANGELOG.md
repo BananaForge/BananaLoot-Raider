@@ -5,6 +5,11 @@ festgehalten.
 
 ## Unreleased
 
+- Geaendert: Alle Fenster haben jetzt einen dunklen, fast deckenden Hintergrund
+  (besser lesbar, keine durchscheinenden Texte anderer Fenster) und werden beim
+  Anklicken/Oeffnen komplett nach oben geholt. Ebenen vereinheitlicht: Roll-Sync-
+  Popup und Loot-Historie auf HIGH, alle weiteren Fenster auf DIALOG
+  (`BananaLootRaiderTheme.lua`).
 - Neu: Raid-Code. Der Loot-Master von BananaLoot nennt einen Raid-Code (z.B.
   `MC-7K3Q`). Mit `/blr code [Code]` verbindet man sich, waehlt seine SR-Items
   aus der Beute des Raids (Icon, Tooltip, Suche, Qualitaetsfilter Weiss/Gruen/

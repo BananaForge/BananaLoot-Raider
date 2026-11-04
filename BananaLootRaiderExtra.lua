@@ -24,6 +24,7 @@ optFrame:SetBackdrop({
     tile = true, tileSize = 32, edgeSize = 32,
     insets = { left = 11, right = 11, top = 11, bottom = 11 },
 })
+BananaLootRaider_Theme.Darken(optFrame)
 optFrame:SetMovable(true)
 optFrame:EnableMouse(true)
 optFrame:RegisterForDrag("LeftButton")
@@ -235,6 +236,7 @@ helpFrame:SetBackdrop({
     tile = true, tileSize = 32, edgeSize = 32,
     insets = { left = 11, right = 11, top = 11, bottom = 11 },
 })
+BananaLootRaider_Theme.Darken(helpFrame)
 helpFrame:SetMovable(true)
 helpFrame:EnableMouse(true)
 helpFrame:RegisterForDrag("LeftButton")
