@@ -11,7 +11,7 @@
 -- Vergabe und keine Loot-Fenster-Logik.
 
 BananaLootRaider = {}
-BananaLootRaider.VERSION = "1.5"
+BananaLootRaider.VERSION = "1.6"
 
 -- ============================================================
 -- 1) DATENBANK / SAVEDVARIABLES
@@ -107,6 +107,22 @@ local LOCALE = {
         WIN_HISTORY_TITLE = "Loot-Historie",
         WIN_HISTORY_HINT = "Nur fuer diese Session -- wird nicht gespeichert. Gruppiert nach Boss/Mob (anklicken zum Auf-/Zuklappen). Zeigt Vergaben eines Lootmasters mit aktiviertem Roll-Sync. Bankreserve-Vergaben erscheinen hier bewusst nicht.",
         HISTORY_UNKNOWN_SOURCE = "Unbekannte Quelle",
+        BH_ROLE = "Deine Rolle: %s",
+        BH_AUTO = "automatisch erkannt",
+        BH_R_TANK = "Tank",
+        BH_R_DD = "DD",
+        BH_R_HEAL = "Heiler",
+        BH_SHOW_ALL = "Alle Rollen",
+        BH_SHOW_MINE = "Nur meine Rolle",
+        BH_HIDE_BOSS = "Für diesen Boss nicht mehr anzeigen",
+        BH_NO_ROLE_TEXT = "|cff888888Für deine Rolle gibt es hier keinen eigenen Hinweis.|r",
+        BH_SECOND = "Zusatz:",
+        BH_OPT_ENABLE = "Boss-Hilfen als Fenster anzeigen",
+        BH_OPT_HINT = "Zeigt vor einem Boss ein kleines Fenster mit der Erklärung für deine Rolle (vom Raidleiter per BananaLoot oder beim Anvisieren). Für erfahrene Spieler abschaltbar. Das Fenster schließt sich per X oder bei Kampfbeginn.",
+        BH_OPT_ROLE = "Meine Rolle für Boss-Hilfen:",
+        BH_OPT_AUTO = "Auto",
+        BH_CMD_NOTFOUND = "|cffff5555BananaLoot Raider|r: Kein Boss mit diesem Namen gefunden.",
+        BH_CMD_RESET = "|cff33ff99BananaLoot Raider|r: Ausgeblendete Bosse zurückgesetzt.",
         HISTORY_EMPTY = "|cff888888(noch keine Vergaben in dieser Session)|r",
         HISTORY_OVERFLOW = "|cffff5555%d aeltere Eintraege werden nicht angezeigt|r",
 
@@ -165,7 +181,7 @@ local LOCALE = {
             "/roll                  Hauptspec (1-100)\n" ..
             "/roll 1 99             Off-Spec\n" ..
             "/roll 1 98             Transmog",
-        CMD_HELP = "|cff33ff99BananaLoot Raider|r Befehle: /blr, /blr sr, /blr code [Code], /blr version, /blr options, /blr help",
+        CMD_HELP = "|cff33ff99BananaLoot Raider|r Befehle: /blr, /blr sr, /blr code [Code], /blr version, /blr options, /blr boss [Name|reset], /blr help",
 
         -- Minimap
         MM_TOOLTIP_LEFT = "Linksklick: Loot-Historie oeffnen",
@@ -249,6 +265,22 @@ local LOCALE = {
         WIN_HISTORY_TITLE = "Loot History",
         WIN_HISTORY_HINT = "Current session only -- not saved. Grouped by boss/mob (click to expand/collapse). Shows awards from a loot master with roll-sync enabled. Bank reserve awards deliberately don't appear here.",
         HISTORY_UNKNOWN_SOURCE = "Unknown source",
+        BH_ROLE = "Your role: %s",
+        BH_AUTO = "detected automatically",
+        BH_R_TANK = "Tank",
+        BH_R_DD = "DPS",
+        BH_R_HEAL = "Healer",
+        BH_SHOW_ALL = "All roles",
+        BH_SHOW_MINE = "My role only",
+        BH_HIDE_BOSS = "Don't show again for this boss",
+        BH_NO_ROLE_TEXT = "|cff888888There is no separate note for your role here.|r",
+        BH_SECOND = "Addition:",
+        BH_OPT_ENABLE = "Show boss help as a window",
+        BH_OPT_HINT = "Shows a small window with the explanation for your role before a boss (sent by the raid leader via BananaLoot, or when you target the boss). Can be turned off for experienced players. Close it with the X or it closes when combat starts.",
+        BH_OPT_ROLE = "My role for boss help:",
+        BH_OPT_AUTO = "Auto",
+        BH_CMD_NOTFOUND = "|cffff5555BananaLoot Raider|r: No boss with that name found.",
+        BH_CMD_RESET = "|cff33ff99BananaLoot Raider|r: Hidden bosses reset.",
         HISTORY_EMPTY = "|cff888888(no awards in this session yet)|r",
         HISTORY_OVERFLOW = "|cffff5555%d older entries not shown|r",
 
@@ -304,7 +336,7 @@ local LOCALE = {
             "/roll                  Main Spec (1-100)\n" ..
             "/roll 1 99             Off-Spec\n" ..
             "/roll 1 98             Transmog",
-        CMD_HELP = "|cff33ff99BananaLoot Raider|r Commands: /blr, /blr sr, /blr code [Code], /blr version, /blr options, /blr help",
+        CMD_HELP = "|cff33ff99BananaLoot Raider|r Commands: /blr, /blr sr, /blr code [Code], /blr version, /blr options, /blr boss [Name|reset], /blr help",
 
         MM_TOOLTIP_LEFT = "Left-click: open loot history",
         MM_TOOLTIP_RIGHT = "Right-click: settings",
@@ -802,6 +834,11 @@ function BananaLootRaider:HandleRollSyncMessage(text, sender)
 
     if not self:GetRollSyncEnabled() then return end
 
+    if (msgType == "BT" or msgType == "BA" or msgType == "BB") and BananaLootRaider.HandleBossMessage then
+        BananaLootRaider:HandleBossMessage(msgType, fields)
+        return
+    end
+
     if BananaLootRaider_UI and BananaLootRaider_UI.HandleRollSync then
         BananaLootRaider_UI:HandleRollSync(msgType, fields, sender)
     end
@@ -880,6 +917,9 @@ SlashCmdList["BANANALOOTRAIDER"] = function(msg)
     elseif cmd == "prefetch off" or cmd == "prefetch on" then
         BananaLootRaider:SetPrefetchEnabled(cmd == "prefetch on")
         DEFAULT_CHAT_FRAME:AddMessage("|cff33ff99BananaLoot Raider|r: Prefetch " .. (cmd == "prefetch on" and "on" or "off"))
+
+    elseif cmd == "boss" or string.find(cmd, "^boss ") then
+        if BananaLootRaider.BossSlash then BananaLootRaider:BossSlash(Trim(string.sub(cmd, 5))) end
 
     elseif cmd == "help" then
         if BananaLootRaider_UI and BananaLootRaider_UI.ShowHelp then BananaLootRaider_UI:ShowHelp() end

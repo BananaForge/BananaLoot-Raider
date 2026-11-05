@@ -296,3 +296,12 @@ licensed under the [MIT License](LICENSE). The bundled item database
 contains data sourced from Bananaforge Luminar. See
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for attribution and
 source information.
+
+
+## Boss-Hilfen
+
+Vor einem Boss zeigt BananaLoot Raider ein kleines Fenster mit der Erklaerung fuer deine Rolle
+(Tank/DD/Heiler, "Alle"-Hinweise immer). Ausloeser ist die Ansage des Raidleiters (BananaLoot
+v3.51+), sonst das Anvisieren des Bosses. Schliessen per X oder bei Kampfbeginn. Haken "Fuer
+diesen Boss nicht mehr anzeigen" im Fenster; in den Optionen laesst sich die Funktion ganz
+abschalten und die Rolle festlegen. `/blr boss <Name>` = Vorschau, `/blr boss reset` = zuruecksetzen.

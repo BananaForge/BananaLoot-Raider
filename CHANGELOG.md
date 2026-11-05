@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.6
+
+- Neu: **Boss-Hilfen als Fenster.** Vor einem Boss erscheint ein kleines Fenster mit der Erklaerung - nur fuer DEINE Rolle (Tank / DD / Heiler; "Alle"-Hinweise immer dabei). Die Rolle wird ueber die Talente erkannt oder in den Optionen festgelegt; ein Knopf zeigt bei Bedarf alle Rollen. Ausloeser: die Ansage des Raidleiters (BananaLoot ab v3.51), sonst - als Fallback - das Anvisieren des Bosses (nach 3 Sekunden, nur in Gruppe/Raid). Das Fenster schliesst sich per X oder bei Kampfbeginn.
+- Neu: Haken "Fuer diesen Boss nicht mehr anzeigen" im Fenster und Haken "Boss-Hilfen als Fenster anzeigen" in den Optionen (Standard: an) fuer erfahrene Spieler; Rollenwahl Auto/Tank/DD/Heiler in den Optionen.
+- Neu: Die Standardtexte (112 Bosse) liegen als Kopie in `BananaLootRaiderBossData.lua` (`tools/sync_boss_data.sh` aktualisiert sie aus BananaLoot). Vom Raidleiter in BananaLoot geaenderte Texte kommen per Addon-Nachricht und werden gespeichert.
+- Neu: `/blr boss <Name>` zeigt die Vorschau eines Bosses, `/blr boss reset` blendet ausgeblendete Bosse wieder ein.
+
 ## v1.5
 
 - Neu: Kleine Sprach-Buttons "DE" / "EN" rechts oben neben dem Schliessen-Kreuz der Loot-Historie; ein Klick schaltet sofort um (aktive Sprache golden).
