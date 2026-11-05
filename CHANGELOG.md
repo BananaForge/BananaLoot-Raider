@@ -3,6 +3,10 @@
 Alle nennenswerten Änderungen an BananaLoot Raider werden hier
 festgehalten.
 
+## v1.3
+
+- Neu: Loot-Historie lesbarer. Kleiner Rahmen um die Liste, hoehere Zeilen mit mehr Abstand (zweizeilige Itemnamen werden nicht mehr gequetscht) und ein Gitternetz mit Zeilenrahmen und Spaltentrennern (Zeit | Item | Gewinner | Pool).
+
 ## v1.2
 
 - Neu: Die Versionsnummer steht im Titel des Hauptfensters ("Loot-Historie v1.2") und in der Ladezeile; `/blr version` zeigt sie an. In einer Gruppe antwortet BananaLoot Raider auf `/bl version` von BananaLoot mit seiner Version, so sieht der Loot-Master, wer welche Version hat. Regel: jede Aenderung erhoeht die Version (beide TOCs + `BananaLootRaider.VERSION` + Ueberschrift hier); `tools/check_version.sh` prueft das.

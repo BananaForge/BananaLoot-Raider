@@ -469,43 +469,77 @@ historyHint:SetWidth(400)
 historyHint:SetJustifyH("CENTER")
 historyHint:SetText(BananaLootRaider:L("WIN_HISTORY_HINT"))
 
+-- Kleiner Rahmen um die Liste
+local historyBox = CreateFrame("Frame", "BananaLootRaiderHistoryBox", historyFrame)
+historyBox:SetPoint("TOPLEFT", historyFrame, "TOPLEFT", 10, -118)
+historyBox:SetPoint("BOTTOMRIGHT", historyFrame, "BOTTOMRIGHT", -8, 16)
+historyBox:SetBackdrop({
+    bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true, tileSize = 16, edgeSize = 12,
+    insets = { left = 3, right = 3, top = 3, bottom = 3 },
+})
+historyBox:SetBackdropColor(0, 0, 0, 0.6)
+historyBox:SetBackdropBorderColor(0.6, 0.6, 0.6, 1)
+
 local historyScroll = CreateFrame("ScrollFrame", "BananaLootRaiderHistoryScroll", historyFrame, "UIPanelScrollFrameTemplate")
 historyScroll:SetPoint("TOPLEFT", historyFrame, "TOPLEFT", 16, -124)
-historyScroll:SetPoint("BOTTOMRIGHT", historyFrame, "BOTTOMRIGHT", -30, 20)
+historyScroll:SetPoint("BOTTOMRIGHT", historyFrame, "BOTTOMRIGHT", -30, 22)
 
 local historyChild = CreateFrame("Frame", "BananaLootRaiderHistoryScrollChild", historyScroll)
 historyChild:SetWidth(380)
 historyChild:SetHeight(1)
 historyScroll:SetScrollChild(historyChild)
 
-local HISTORY_ROW_H = 20
+local HISTORY_ROW_H = 36
 local HISTORY_MAX = 30
 local historyRows = {}
 
 local function CreateHistoryRow(i)
     local r = CreateFrame("Frame", "BananaLootRaiderHistoryRow" .. i, historyChild)
     r:SetWidth(380)
-    r:SetHeight(HISTORY_ROW_H)
+    r:SetHeight(HISTORY_ROW_H - 2)
     r:SetPoint("TOPLEFT", historyChild, "TOPLEFT", 0, -(i - 1) * HISTORY_ROW_H)
+    r:SetBackdrop({
+        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 16, edgeSize = 8,
+        insets = { left = 2, right = 2, top = 2, bottom = 2 },
+    })
+    r:SetBackdropColor(0.1, 0.1, 0.1, 0.8)
+    r:SetBackdropBorderColor(0.45, 0.45, 0.45, 1)
+    -- Spaltentrenner (Gitter): Zeit | Item | Gewinner | Pool
+    local function Divider(x)
+        local t = r:CreateTexture(nil, "ARTWORK")
+        t:SetTexture(0.45, 0.45, 0.45, 0.9)
+        t:SetWidth(1)
+        t:SetPoint("TOP", r, "TOPLEFT", x, -3)
+        t:SetPoint("BOTTOM", r, "BOTTOMLEFT", x, 3)
+    end
+    Divider(44)
+    Divider(210)
+    Divider(312)
 
     r.timeText = r:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    r.timeText:SetPoint("LEFT", r, "LEFT", 0, 0)
-    r.timeText:SetWidth(40)
+    r.timeText:SetPoint("LEFT", r, "LEFT", 6, 0)
+    r.timeText:SetWidth(36)
     r.timeText:SetJustifyH("LEFT")
 
     r.itemText = r:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    r.itemText:SetPoint("LEFT", r.timeText, "RIGHT", 4, 0)
-    r.itemText:SetWidth(160)
+    r.itemText:SetPoint("LEFT", r.timeText, "RIGHT", 8, 0)
+    r.itemText:SetWidth(154)
+    r.itemText:SetHeight(28)
     r.itemText:SetJustifyH("LEFT")
+    r.itemText:SetJustifyV("MIDDLE")
 
     r.winnerText = r:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    r.winnerText:SetPoint("LEFT", r.itemText, "RIGHT", 4, 0)
-    r.winnerText:SetWidth(100)
+    r.winnerText:SetPoint("LEFT", r.itemText, "RIGHT", 8, 0)
+    r.winnerText:SetWidth(92)
     r.winnerText:SetJustifyH("LEFT")
 
     r.poolText = r:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    r.poolText:SetPoint("LEFT", r.winnerText, "RIGHT", 4, 0)
-    r.poolText:SetWidth(70)
+    r.poolText:SetPoint("LEFT", r.winnerText, "RIGHT", 8, 0)
+    r.poolText:SetWidth(62)
     r.poolText:SetJustifyH("LEFT")
 
     return r
@@ -542,7 +576,7 @@ local function RefreshHistoryList()
         local entry = historyEntries[i]
         local row = historyRows[shown]
         row.timeText:SetText(entry.time)
-        row.itemText:SetWidth(160)
+        row.itemText:SetWidth(154)
         row.itemText:SetText(BananaLootRaider:ResolveItemDisplay(entry.itemID))
         row.winnerText:SetText(BananaLootRaider:ColoredName(entry.winner))
         local labelKey = HISTORY_POOL_LABEL_KEY[entry.poolCode]
@@ -554,7 +588,7 @@ local function RefreshHistoryList()
 
     if shown == 0 then
         historyRows[1].timeText:SetText("")
-        historyRows[1].itemText:SetWidth(330)
+        historyRows[1].itemText:SetWidth(300)
         historyRows[1].itemText:SetText(BananaLootRaider:L("HISTORY_EMPTY"))
         historyRows[1].winnerText:SetText("")
         historyRows[1].poolText:SetText("")
