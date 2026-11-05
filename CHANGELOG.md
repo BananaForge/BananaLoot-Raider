@@ -5,6 +5,11 @@ festgehalten.
 
 ## Unreleased
 
+- Neu: Jedes Item hat Informationen. `BananaLootRaiderItemInfoExtra.lua` ergaenzt Name,
+  Qualitaet und Icon fuer ca. 1500 Items aus AtlasLoot, die der Item-Datenbank fehlten;
+  kennt der Client keinen Tooltip, baut das Addon ihn lokal aus der Datenbank.
+- Geaendert: Das Item-Vorladen merkt sich Anfragen 3 Tage lang und laeuft nicht doppelt,
+  wenn BananaLoot installiert ist (dessen Vorladen uebernimmt).
 - Neu: Automatische Raid-Erkennung. In einer Gruppe/einem Raid fragt der Raider im
   Hintergrund, welcher BananaLoot-Raid dort laeuft, und verbindet sich mit dessen
   Raid-Code selbst (nur ueber Raid-/Gruppenchat, nie ueber die Gilde). Ein von

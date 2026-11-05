@@ -36,6 +36,12 @@ local LOCALE = {
         UI_BTN_SR_SUBMIT = "SR einreichen",
         UI_BTN_SR_SUBMIT_TOOLTIP = "SR fuer den Raid des Loot-Masters einreichen (Raid-Code, wird in der Gruppe automatisch erkannt)",
         UI_BTN_SR_WHISPER = "Whisper-SR",
+        TIP_ILVL = "Gegenstandsstufe %d",
+        TIP_REQLEVEL = "Benötigt Stufe %d",
+        TIP_WEAPON_DMG = "%s - %s Schaden",
+        TIP_WEAPON_SPEED = "Tempo %s",
+        TIP_WEAPON_DPS = "(%s Schaden pro Sekunde)",
+        TIP_OFFLINE = "(Daten aus der BananaLoot-Raider-Datenbank, der Client kennt das Item noch nicht)",
         SR_WIN_TITLE = "SR einreichen (Raid-Code)",
         SR_CODE_LABEL = "Raid-Code:",
         SR_CONNECT = "Verbinden",
@@ -172,6 +178,12 @@ local LOCALE = {
         UI_BTN_SR_SUBMIT = "Submit SR",
         UI_BTN_SR_SUBMIT_TOOLTIP = "Submit SR for the loot master's raid (raid code, detected automatically in your group)",
         UI_BTN_SR_WHISPER = "Whisper SR",
+        TIP_ILVL = "Item Level %d",
+        TIP_REQLEVEL = "Requires Level %d",
+        TIP_WEAPON_DMG = "%s - %s Damage",
+        TIP_WEAPON_SPEED = "Speed %s",
+        TIP_WEAPON_DPS = "(%s damage per second)",
+        TIP_OFFLINE = "(Data from the BananaLoot Raider database, the client does not know this item yet)",
         SR_WIN_TITLE = "Submit SR (raid code)",
         SR_CODE_LABEL = "Raid code:",
         SR_CONNECT = "Connect",
@@ -475,8 +487,19 @@ local function RefreshRosterClassCache()
 end
 
 function BananaLootRaider:GetStaticItemInfo(itemID)
-    if not BananaLootRaider_ItemDB then return nil end
-    return BananaLootRaider_ItemDB[itemID]
+    local e = BananaLootRaider_ItemDB and BananaLootRaider_ItemDB[itemID]
+    if e then return e end
+    -- zweite Quelle: BananaLootRaiderItemInfoExtra.lua (AtlasLoot, fehlende Items)
+    if not self.extraInfoCache then self.extraInfoCache = {} end
+    local x = self.extraInfoCache[itemID]
+    if x then return x end
+    local raw = BananaLootRaider_ItemInfoExtra and BananaLootRaider_ItemInfoExtra[itemID]
+    if raw then
+        x = { name = raw[1], quality = raw[2], icon = raw[3] }
+        self.extraInfoCache[itemID] = x
+        return x
+    end
+    return nil
 end
 
 function BananaLootRaider:BuildItemLink(itemID, name)

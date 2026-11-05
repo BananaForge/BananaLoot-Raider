@@ -15,7 +15,9 @@
 
 BananaLootRaiderTheme.lua
 BananaLootRaiderItemDB.lua
+BananaLootRaiderItemInfoExtra.lua
 BananaLootRaider.lua
+BananaLootRaiderItemTip.lua
 BananaLootRaiderUI.lua
 BananaLootRaiderExtra.lua
 BananaLootRaiderZoneLoot.lua

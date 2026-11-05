@@ -40,12 +40,18 @@ local function AttachIconTooltip(row)
             end
         end
         if row.currentLink and string.find(row.currentLink, "|Hitem:") then
-            GameTooltip:SetOwner(row.iconFrame, "ANCHOR_RIGHT")
             local _, _, raw = string.find(row.currentLink, "item:([%d:%-]+)")
-            if raw then
-                pcall(function() GameTooltip:SetHyperlink("item:" .. raw) end)
+            local _, _, idStr = string.find(row.currentLink, "item:(%d+)")
+            if idStr and BananaLootRaider.ShowItemTooltip then
+                -- echter Tooltip, sonst lokal aus der Item-Datenbank (BananaLootRaiderItemTip.lua)
+                BananaLootRaider:ShowItemTooltip(row.iconFrame, tonumber(idStr), "ANCHOR_RIGHT")
+            else
+                GameTooltip:SetOwner(row.iconFrame, "ANCHOR_RIGHT")
+                if raw then
+                    pcall(function() GameTooltip:SetHyperlink("item:" .. raw) end)
+                end
+                GameTooltip:Show()
             end
-            GameTooltip:Show()
         end
     end)
     row.iconFrame:SetScript("OnLeave", function()

@@ -102,8 +102,8 @@ worker:SetScript("OnUpdate", function()
     if not id then
         worker:Hide()
         if announce and total > 0 then
-            Say("Item-Cache fuer " .. (zoneName or "?") .. " fertig (" .. total .. " Items geladen).",
-                "Item cache for " .. (zoneName or "?") .. " ready (" .. total .. " items loaded).")
+            Say("Item-Cache fuer " .. (zoneName or "?") .. " fertig (" .. total .. " Items angefragt).",
+                "Item cache for " .. (zoneName or "?") .. " ready (" .. total .. " items requested).")
         end
         announce = false
         return
@@ -120,6 +120,12 @@ worker:SetScript("OnUpdate", function()
 end)
 
 function BananaLootRaider:PrefetchZoneItems(zone, verbose)
+    -- Ist BananaLoot installiert, uebernimmt dessen Prefetch (gleicher Client-Cache): kein
+    -- doppeltes Abfragen und keine doppelte Chat-Meldung. Manuell (/blr prefetch) laeuft es immer.
+    if not verbose and BananaLoot and BananaLoot.PrefetchZoneItems and BananaLoot.GetPrefetchEnabled
+        and BananaLoot:GetPrefetchEnabled() then
+        return 0
+    end
     zone = zone or GetRealZoneText()
     local ids = CollectZoneItems(zone)
     if not ids then
@@ -134,10 +140,18 @@ function BananaLootRaider:PrefetchZoneItems(zone, verbose)
     for i = qHead, qTail do
         if queue[i] then k = k + 1; fresh[k] = queue[i] end
     end
+    -- dauerhaft merken, was schon angefragt wurde (3 Tage), statt bei jedem Login alles neu
+    BananaLootRaider.EnsureDB()
+    if not BananaLootRaider_DB.prefetchSeen then BananaLootRaider_DB.prefetchSeen = {} end
+    local seen, now = BananaLootRaider_DB.prefetchSeen, time()
     for id in pairs(ids) do
         if not requested[id] then
             requested[id] = true
-            if not IsKnown(id) then k = k + 1; fresh[k] = id end
+            local t = seen[id]
+            if not IsKnown(id) and (verbose or not t or (now - t) > 3 * 86400) then
+                seen[id] = now
+                k = k + 1; fresh[k] = id
+            end
         end
     end
     queue, qHead, qTail = fresh, 1, k

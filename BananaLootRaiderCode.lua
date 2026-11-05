@@ -526,20 +526,7 @@ if downBtn then downBtn:SetScript("OnClick", function() F.slider:SetValue(F.slid
 F.list:SetScript("OnMouseWheel", function() F.slider:SetValue(F.slider:GetValue() - arg1 * 3) end)
 
 function R.ShowTooltip(owner, id)
-    GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
-    local ok = pcall(function() GameTooltip:SetHyperlink("item:" .. id .. ":0:0:0:0:0:0:0") end)
-    local lines = 0
-    if ok and GameTooltip:NumLines() then lines = GameTooltip:NumLines() end
-    if lines == 0 then
-        local name, quality, _, st = R.ItemInfo(id)
-        GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
-        GameTooltip:SetText("|cff" .. (QUALITY_HEX[quality] or "ffffff") .. name .. "|r")
-        if st and st.ilvl then
-            GameTooltip:AddLine(string.format(BananaLootRaider:L("SR_TIP_ILVL"), st.ilvl), 1, 1, 1)
-        end
-        GameTooltip:AddLine(BananaLootRaider:L("SR_TIP_UNCACHED"), 0.7, 0.7, 0.7, 1)
-    end
-    GameTooltip:Show()
+    BananaLootRaider:ShowItemTooltip(owner, id, "ANCHOR_RIGHT")
 end
 
 for i = 1, NUM_ROWS do
