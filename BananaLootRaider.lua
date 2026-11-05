@@ -11,7 +11,7 @@
 -- Vergabe und keine Loot-Fenster-Logik.
 
 BananaLootRaider = {}
-BananaLootRaider.VERSION = "1.0"
+BananaLootRaider.VERSION = "1.2"
 
 -- ============================================================
 -- 1) DATENBANK / SAVEDVARIABLES
@@ -42,6 +42,7 @@ local LOCALE = {
         TIP_WEAPON_SPEED = "Tempo %s",
         TIP_WEAPON_DPS = "(%s Schaden pro Sekunde)",
         TIP_OFFLINE = "(Daten aus der BananaLoot-Raider-Datenbank, der Client kennt das Item noch nicht)",
+        VERSION_OWN = "|cff33ff99BananaLoot Raider|r Version %s",
         SR_WIN_TITLE = "SR einreichen (Raid-Code)",
         SR_CODE_LABEL = "Raid-Code:",
         SR_CONNECT = "Verbinden",
@@ -76,7 +77,7 @@ local LOCALE = {
         SR_LIMIT_MSG = "|cffff5555BananaLoot Raider|r: Maximal %d SR-Item(s) erlaubt. Erst eines abwaehlen.",
         SR_TIP_ILVL = "Item-Level %d",
         SR_TIP_UNCACHED = "Details noch nicht im Client-Cache. Sie werden beim Betreten der Instanz geladen.",
-        MSG_ADDON_LOADED = "|cff33ff99BananaLoot Raider|r geladen. /blr oeffnet die Loot-Historie, /blr help zeigt alle Befehle.",
+        MSG_ADDON_LOADED = "|cff33ff99BananaLoot Raider|r v%s geladen. /blr oeffnet die Loot-Historie, /blr help zeigt alle Befehle.",
 
         -- Roll-Sync-Popup
         RSWIN_TITLE = "BananaLoot Raider - Roll",
@@ -163,7 +164,7 @@ local LOCALE = {
             "/roll                  Hauptspec (1-100)\n" ..
             "/roll 1 99             Off-Spec\n" ..
             "/roll 1 98             Transmog",
-        CMD_HELP = "|cff33ff99BananaLoot Raider|r Befehle: /blr, /blr sr, /blr code [Code], /blr options, /blr help",
+        CMD_HELP = "|cff33ff99BananaLoot Raider|r Befehle: /blr, /blr sr, /blr code [Code], /blr version, /blr options, /blr help",
 
         -- Minimap
         MM_TOOLTIP_LEFT = "Linksklick: Loot-Historie oeffnen",
@@ -184,6 +185,7 @@ local LOCALE = {
         TIP_WEAPON_SPEED = "Speed %s",
         TIP_WEAPON_DPS = "(%s damage per second)",
         TIP_OFFLINE = "(Data from the BananaLoot Raider database, the client does not know this item yet)",
+        VERSION_OWN = "|cff33ff99BananaLoot Raider|r version %s",
         SR_WIN_TITLE = "Submit SR (raid code)",
         SR_CODE_LABEL = "Raid code:",
         SR_CONNECT = "Connect",
@@ -218,7 +220,7 @@ local LOCALE = {
         SR_LIMIT_MSG = "|cffff5555BananaLoot Raider|r: At most %d SR item(s) allowed. Deselect one first.",
         SR_TIP_ILVL = "Item level %d",
         SR_TIP_UNCACHED = "Details not in the client cache yet. They are loaded when you enter the instance.",
-        MSG_ADDON_LOADED = "|cff33ff99BananaLoot Raider|r loaded. /blr opens the loot history, /blr help shows all commands.",
+        MSG_ADDON_LOADED = "|cff33ff99BananaLoot Raider|r v%s loaded. /blr opens the loot history, /blr help shows all commands.",
 
         RSWIN_TITLE = "BananaLoot Raider - Roll",
         RSWIN_MODE_SR = "SR",
@@ -300,7 +302,7 @@ local LOCALE = {
             "/roll                  Main Spec (1-100)\n" ..
             "/roll 1 99             Off-Spec\n" ..
             "/roll 1 98             Transmog",
-        CMD_HELP = "|cff33ff99BananaLoot Raider|r Commands: /blr, /blr sr, /blr code [Code], /blr options, /blr help",
+        CMD_HELP = "|cff33ff99BananaLoot Raider|r Commands: /blr, /blr sr, /blr code [Code], /blr version, /blr options, /blr help",
 
         MM_TOOLTIP_LEFT = "Left-click: open loot history",
         MM_TOOLTIP_RIGHT = "Right-click: settings",
@@ -816,7 +818,7 @@ eventFrame:RegisterEvent("TRADE_ACCEPT_UPDATE")
 eventFrame:SetScript("OnEvent", function()
     if event == "ADDON_LOADED" and arg1 == "BananaLootRaider" then
         EnsureDB()
-        DEFAULT_CHAT_FRAME:AddMessage(BananaLootRaider:L("MSG_ADDON_LOADED"))
+        DEFAULT_CHAT_FRAME:AddMessage(string.format(BananaLootRaider:L("MSG_ADDON_LOADED"), BananaLootRaider.VERSION))
         if BananaLootRaider_UI and BananaLootRaider_UI.ApplyLocaleAll then BananaLootRaider_UI:ApplyLocaleAll() end
         RefreshRosterClassCache()
 
@@ -863,6 +865,9 @@ SlashCmdList["BANANALOOTRAIDER"] = function(msg)
     elseif cmd == "code" or string.find(cmd, "^code ") then
         local code = Trim(string.sub(msg, 5))
         if BananaLootRaider.ShowRaidCode then BananaLootRaider:ShowRaidCode(code) end
+
+    elseif cmd == "version" or cmd == "ver" then
+        DEFAULT_CHAT_FRAME:AddMessage(string.format(BananaLootRaider:L("VERSION_OWN"), BananaLootRaider.VERSION))
 
     elseif cmd == "options" or cmd == "config" then
         if BananaLootRaider_UI and BananaLootRaider_UI.ToggleOptions then BananaLootRaider_UI:ToggleOptions() end

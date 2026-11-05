@@ -396,7 +396,7 @@ historyTitleIcon:SetHeight(18)
 historyTitleIcon:SetTexture("Interface\\AddOns\\BananaLootRaider\\Icons\\BananaLootRaider_Icon_64")
 
 local historyTitle = historyFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-historyTitle:SetText(BananaLootRaider:L("WIN_HISTORY_TITLE"))
+historyTitle:SetText(BananaLootRaider:L("WIN_HISTORY_TITLE") .. " |cff9d9d9dv" .. BananaLootRaider.VERSION .. "|r")
 historyTitle:SetPoint("TOP", historyFrame, "TOP", 0, -16)
 historyTitleIcon:SetPoint("RIGHT", historyTitle, "LEFT", -6, 0)
 
@@ -716,7 +716,7 @@ function BananaLootRaider_UI:ApplyLocale()
     rsTmBtn:SetText(BananaLootRaider:L("RSWIN_TM_BTN"))
     if rollSyncState.active then RefreshRollSyncPopup() end
 
-    historyTitle:SetText(BananaLootRaider:L("WIN_HISTORY_TITLE"))
+    historyTitle:SetText(BananaLootRaider:L("WIN_HISTORY_TITLE") .. " |cff9d9d9dv" .. BananaLootRaider.VERSION .. "|r")
     historyHint:SetText(BananaLootRaider:L("WIN_HISTORY_HINT"))
     historyOptBtn:SetText(BananaLootRaider:L("UI_BTN_OPTIONS"))
     if historyFrame:IsShown() then RefreshHistoryList() end

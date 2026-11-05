@@ -179,11 +179,21 @@ function BananaLootRaider:HandleCodeMessage(text, sender, channel)
     if not text or (string.len(text) > 2 and string.sub(text, 3, 3) ~= "~") then return false end
     local t = string.sub(text, 1, 2)
     if t ~= "SS" and t ~= "SH" and t ~= "SA" and t ~= "SR" and t ~= "SQ" and t ~= "SJ" and t ~= "SD"
-        and t ~= "SW" and t ~= "SC" and t ~= "HQ" and t ~= "HA" and t ~= "HO" then
+        and t ~= "SW" and t ~= "SC" and t ~= "HQ" and t ~= "HA" and t ~= "HO" and t ~= "RV" then
         return false
     end
     -- nur fuer BananaLoot bestimmt
-    if t == "SR" or t == "SQ" or t == "SJ" or t == "SD" or t == "SW" or t == "HQ" or t == "HA" or t == "HO" then
+    -- HQ: "wer hat BananaLoot?" -- BananaLoot Raider antwortet mit seiner Version (RV), leicht
+    -- verzoegert, damit nicht alle Antworten gleichzeitig kommen (BananaLoot: /bl version)
+    if t == "HQ" then
+        if channel == "RAID" or channel == "PARTY" then
+            R.after(math.random() * 1.2, function()
+                pcall(function() SendAddonMessage(PREFIX, "RV~" .. BananaLootRaider.VERSION, channel) end)
+            end)
+        end
+        return true
+    end
+    if t == "SR" or t == "SQ" or t == "SJ" or t == "SD" or t == "SW" or t == "HA" or t == "HO" or t == "RV" then
         return true
     end
     local fields = Split(text, "~")
@@ -323,6 +333,10 @@ function R.AutoSync(force)
 end
 
 R.autoDelay = nil
+R.timers = {}
+function R.after(delay, fn)
+    table.insert(R.timers, { at = GetTime() + delay, fn = fn })
+end
 R.ev = CreateFrame("Frame", "BananaLootRaiderCodeEvents")
 R.ev:RegisterEvent("PLAYER_ENTERING_WORLD")
 R.ev:RegisterEvent("RAID_ROSTER_UPDATE")
@@ -332,6 +346,16 @@ R.ev:SetScript("OnEvent", function()
     R.ev:Show()
 end)
 R.ev:SetScript("OnUpdate", function()
+    if table.getn(R.timers) > 0 then
+        local now = GetTime()
+        for i = table.getn(R.timers), 1, -1 do
+            local t = R.timers[i]
+            if now >= t.at then
+                table.remove(R.timers, i)
+                pcall(t.fn)
+            end
+        end
+    end
     if not R.autoDelay then return end
     R.autoDelay = R.autoDelay - arg1
     if R.autoDelay <= 0 then

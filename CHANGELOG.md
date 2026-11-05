@@ -3,7 +3,9 @@
 Alle nennenswerten Änderungen an BananaLoot Raider werden hier
 festgehalten.
 
-## Unreleased
+## v1.2
+
+- Neu: Die Versionsnummer steht im Titel des Hauptfensters ("Loot-Historie v1.2") und in der Ladezeile; `/blr version` zeigt sie an. In einer Gruppe antwortet BananaLoot Raider auf `/bl version` von BananaLoot mit seiner Version, so sieht der Loot-Master, wer welche Version hat. Regel: jede Aenderung erhoeht die Version (beide TOCs + `BananaLootRaider.VERSION` + Ueberschrift hier); `tools/check_version.sh` prueft das.
 
 - Neu: Jedes Item hat Informationen. `BananaLootRaiderItemInfoExtra.lua` ergaenzt Name,
   Qualitaet und Icon fuer ca. 1500 Items aus AtlasLoot, die der Item-Datenbank fehlten;

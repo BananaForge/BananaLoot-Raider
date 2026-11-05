@@ -199,6 +199,7 @@ under Options.
 | `/blr` | Open/close the shared loot history |
 | `/blr sr` | Open the SR send window (sr/unsr via shift-click) |
 | `/blr code [code]` | Enter a raid code and submit SR from the raid's loot |
+| `/blr version` | Show the version of BananaLoot Raider |
 | `/blr options` | Open settings |
 | `/blr help` | Show the command legend |
 
