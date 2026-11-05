@@ -11,7 +11,7 @@
 -- Vergabe und keine Loot-Fenster-Logik.
 
 BananaLootRaider = {}
-BananaLootRaider.VERSION = "1.3"
+BananaLootRaider.VERSION = "1.4"
 
 -- ============================================================
 -- 1) DATENBANK / SAVEDVARIABLES
@@ -105,7 +105,8 @@ local LOCALE = {
 
         -- Geteilte Loot-Historie
         WIN_HISTORY_TITLE = "Loot-Historie",
-        WIN_HISTORY_HINT = "Nur fuer diese Session -- wird nicht gespeichert. Zeigt Vergaben eines Lootmasters mit aktiviertem Roll-Sync. Bankreserve-Vergaben erscheinen hier bewusst nicht.",
+        WIN_HISTORY_HINT = "Nur fuer diese Session -- wird nicht gespeichert. Gruppiert nach Boss/Mob (anklicken zum Auf-/Zuklappen). Zeigt Vergaben eines Lootmasters mit aktiviertem Roll-Sync. Bankreserve-Vergaben erscheinen hier bewusst nicht.",
+        HISTORY_UNKNOWN_SOURCE = "Unbekannte Quelle",
         HISTORY_EMPTY = "|cff888888(noch keine Vergaben in dieser Session)|r",
         HISTORY_OVERFLOW = "|cffff5555%d aeltere Eintraege werden nicht angezeigt|r",
 
@@ -246,7 +247,8 @@ local LOCALE = {
         POOL_RAIDROLL = "Raid Roll",
 
         WIN_HISTORY_TITLE = "Loot History",
-        WIN_HISTORY_HINT = "Current session only -- not saved. Shows awards from a loot master with roll-sync enabled. Bank reserve awards deliberately don't appear here.",
+        WIN_HISTORY_HINT = "Current session only -- not saved. Grouped by boss/mob (click to expand/collapse). Shows awards from a loot master with roll-sync enabled. Bank reserve awards deliberately don't appear here.",
+        HISTORY_UNKNOWN_SOURCE = "Unknown source",
         HISTORY_EMPTY = "|cff888888(no awards in this session yet)|r",
         HISTORY_OVERFLOW = "|cffff5555%d older entries not shown|r",
 
@@ -645,7 +647,7 @@ end
 --   RT~itemID~Namen(Komma-getrennt)       Gleichstand, nur diese Spieler rollen erneut
 --   RW~itemID~Gewinner~Score~Wurf~Pool    Roll abgeschlossen (Pool: ms/os/tmog)
 --   RC~itemID~Grund                       Abgebrochen (Grund: 0 manuell, 1 niemand gerollt)
---   AW~itemID~Gewinner~PoolCode           Vergabe (fuer geteilte Loot-Historie)
+--   AW~itemID~Gewinner~PoolCode[~Quelle]  Vergabe (fuer geteilte Loot-Historie; Quelle = Boss/Mob)
 --   TT~itemID~Von~An                      Trade-Tracking-Weitergabe
 --   RL~Schluessel                         Raidlead-Ansage eines anderen Clients
 --                                         (nur Lootmaster-Feature, wird ignoriert)
@@ -767,7 +769,7 @@ function BananaLootRaider:HandleRollSyncMessage(text, sender)
 
     if msgType == "AW" then
         if not isSelf and BananaLootRaider_UI and BananaLootRaider_UI.AddHistoryEntry then
-            BananaLootRaider_UI:AddHistoryEntry(tonumber(fields[2]), fields[3], fields[4])
+            BananaLootRaider_UI:AddHistoryEntry(tonumber(fields[2]), fields[3], fields[4], fields[5])
         end
         -- Merkt sich auf JEDEM Client mit aktiviertem Trade-Tracking (nicht
         -- nur beim Lootmaster) den aktuellen Besitzer eines ueber BananaLoot

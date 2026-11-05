@@ -492,117 +492,184 @@ historyChild:SetHeight(1)
 historyScroll:SetScrollChild(historyChild)
 
 local HISTORY_ROW_H = 36
-local HISTORY_MAX = 30
+local HISTORY_MAX = 200          -- maximal gespeicherte Vergaben
+local HISTORY_W = 380
+-- Spalten: Zeit | Item | Gewinner | Pool (x-Anfang, Breite)
+local COLS = { { 0, 44 }, { 44, 166 }, { 210, 102 }, { 312, 68 } }
 local historyRows = {}
+local historyGroups = {}         -- neueste zuerst: { name=, expanded=, entries={neueste zuerst} }
+
+historyScroll:EnableMouseWheel(true)
+historyScroll:SetScript("OnMouseWheel", function()
+    local cur = historyScroll:GetVerticalScroll()
+    local max = historyScroll:GetVerticalScrollRange()
+    local nv = cur - arg1 * HISTORY_ROW_H * 1.5
+    if nv < 0 then nv = 0 end
+    if nv > max then nv = max end
+    historyScroll:SetVerticalScroll(nv)
+    local bar = getglobal("BananaLootRaiderHistoryScrollScrollBar")
+    if bar then bar:SetValue(nv) end
+end)
+historyBox:EnableMouseWheel(true)
+historyBox:SetScript("OnMouseWheel", function()
+    local f = historyScroll:GetScript("OnMouseWheel")
+    if f then f() end
+end)
 
 local function CreateHistoryRow(i)
-    local r = CreateFrame("Frame", "BananaLootRaiderHistoryRow" .. i, historyChild)
-    r:SetWidth(380)
+    local r = CreateFrame("Button", "BananaLootRaiderHistoryRow" .. i, historyChild)
+    r:SetWidth(HISTORY_W)
     r:SetHeight(HISTORY_ROW_H - 2)
     r:SetPoint("TOPLEFT", historyChild, "TOPLEFT", 0, -(i - 1) * HISTORY_ROW_H)
+    r:EnableMouseWheel(true)
+    r:SetScript("OnMouseWheel", function()
+        local f = historyScroll:GetScript("OnMouseWheel")
+        if f then f() end
+    end)
     r:SetBackdrop({
         bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
         tile = true, tileSize = 16, edgeSize = 8,
         insets = { left = 2, right = 2, top = 2, bottom = 2 },
     })
-    r:SetBackdropColor(0.1, 0.1, 0.1, 0.8)
-    r:SetBackdropBorderColor(0.45, 0.45, 0.45, 1)
-    -- Spaltentrenner (Gitter): Zeit | Item | Gewinner | Pool
-    local function Divider(x)
+    r.dividers = {}
+    for k = 2, 4 do
         local t = r:CreateTexture(nil, "ARTWORK")
         t:SetTexture(0.45, 0.45, 0.45, 0.9)
         t:SetWidth(1)
-        t:SetPoint("TOP", r, "TOPLEFT", x, -3)
-        t:SetPoint("BOTTOM", r, "BOTTOMLEFT", x, 3)
+        t:SetPoint("TOP", r, "TOPLEFT", COLS[k][1], -3)
+        t:SetPoint("BOTTOM", r, "BOTTOMLEFT", COLS[k][1], 3)
+        r.dividers[k] = t
     end
-    Divider(44)
-    Divider(210)
-    Divider(312)
-
-    r.timeText = r:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    r.timeText:SetPoint("LEFT", r, "LEFT", 6, 0)
-    r.timeText:SetWidth(36)
-    r.timeText:SetJustifyH("LEFT")
-
-    r.itemText = r:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    r.itemText:SetPoint("LEFT", r.timeText, "RIGHT", 8, 0)
-    r.itemText:SetWidth(154)
-    r.itemText:SetHeight(28)
-    r.itemText:SetJustifyH("LEFT")
-    r.itemText:SetJustifyV("MIDDLE")
-
-    r.winnerText = r:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    r.winnerText:SetPoint("LEFT", r.itemText, "RIGHT", 8, 0)
-    r.winnerText:SetWidth(92)
-    r.winnerText:SetJustifyH("LEFT")
-
-    r.poolText = r:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    r.poolText:SetPoint("LEFT", r.winnerText, "RIGHT", 8, 0)
-    r.poolText:SetWidth(62)
-    r.poolText:SetJustifyH("LEFT")
-
+    local function Cell(k, font)
+        local fs = r:CreateFontString(nil, "OVERLAY", font)
+        fs:SetPoint("LEFT", r, "LEFT", COLS[k][1] + 3, 0)
+        fs:SetWidth(COLS[k][2] - 6)
+        fs:SetHeight(28)
+        fs:SetJustifyH("CENTER")
+        fs:SetJustifyV("MIDDLE")
+        return fs
+    end
+    r.timeText = Cell(1, "GameFontDisableSmall")
+    r.itemText = Cell(2, "GameFontHighlightSmall")
+    r.winnerText = Cell(3, "GameFontHighlightSmall")
+    r.poolText = Cell(4, "GameFontHighlightSmall")
+    -- Gruppenkopf (Boss/Mob): ein breiter, zentrierter Text
+    r.headText = r:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    r.headText:SetPoint("LEFT", r, "LEFT", 6, 0)
+    r.headText:SetWidth(HISTORY_W - 12)
+    r.headText:SetHeight(28)
+    r.headText:SetJustifyH("CENTER")
+    r.headText:SetJustifyV("MIDDLE")
+    r:SetScript("OnClick", function()
+        local g = this.group
+        if g then
+            g.expanded = not g.expanded
+            BananaLootRaider_UI:RefreshHistory()
+        end
+    end)
     return r
 end
 
-for i = 1, HISTORY_MAX do
-    historyRows[i] = CreateHistoryRow(i)
-    historyRows[i]:Hide()
+local function GetHistoryRow(i)
+    if not historyRows[i] then historyRows[i] = CreateHistoryRow(i) end
+    return historyRows[i]
 end
 
 local historyOverflowText = historyFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
 historyOverflowText:SetPoint("BOTTOM", historyFrame, "BOTTOM", 0, 4)
 historyOverflowText:SetText("")
 
-local historyEntries = {}
-
 local HISTORY_POOL_LABEL_KEY = {
     ms = "POOL_MS", os = "POOL_OS", tmog = "POOL_TMOG",
     manual = "POOL_MANUAL", bank = "POOL_BANK", raidroll = "POOL_RAIDROLL",
 }
 
-local function RefreshHistoryList()
-    local total = table.getn(historyEntries)
-    if total > HISTORY_MAX then
-        historyOverflowText:SetText(string.format(BananaLootRaider:L("HISTORY_OVERFLOW"), total - HISTORY_MAX))
+local function SetRowMode(row, isHead)
+    if isHead then
+        row:SetBackdropColor(0.25, 0.18, 0.02, 0.9)
+        row:SetBackdropBorderColor(0.9, 0.7, 0.2, 1)
+        row.headText:Show()
+        row.timeText:Hide(); row.itemText:Hide(); row.winnerText:Hide(); row.poolText:Hide()
+        for k = 2, 4 do row.dividers[k]:Hide() end
+        row:EnableMouse(true)
     else
-        historyOverflowText:SetText("")
-    end
-
-    local shown = 0
-    for i = 1, total do
-        shown = shown + 1
-        if shown > HISTORY_MAX then break end
-        local entry = historyEntries[i]
-        local row = historyRows[shown]
-        row.timeText:SetText(entry.time)
-        row.itemText:SetWidth(154)
-        row.itemText:SetText(BananaLootRaider:ResolveItemDisplay(entry.itemID))
-        row.winnerText:SetText(BananaLootRaider:ColoredName(entry.winner))
-        local labelKey = HISTORY_POOL_LABEL_KEY[entry.poolCode]
-        row.poolText:SetText(labelKey and BananaLootRaider:L(labelKey) or (entry.poolCode or ""))
-        row:Show()
-    end
-    for i = shown + 1, HISTORY_MAX do historyRows[i]:Hide() end
-    historyChild:SetHeight(math.max(1, shown * HISTORY_ROW_H))
-
-    if shown == 0 then
-        historyRows[1].timeText:SetText("")
-        historyRows[1].itemText:SetWidth(300)
-        historyRows[1].itemText:SetText(BananaLootRaider:L("HISTORY_EMPTY"))
-        historyRows[1].winnerText:SetText("")
-        historyRows[1].poolText:SetText("")
-        historyRows[1]:Show()
+        row:SetBackdropColor(0.1, 0.1, 0.1, 0.8)
+        row:SetBackdropBorderColor(0.45, 0.45, 0.45, 1)
+        row.headText:Hide()
+        row.timeText:Show(); row.itemText:Show(); row.winnerText:Show(); row.poolText:Show()
+        for k = 2, 4 do row.dividers[k]:Show() end
+        row:EnableMouse(false)
+        row.group = nil
     end
 end
 
-function BananaLootRaider_UI:AddHistoryEntry(itemID, winner, poolCode)
-    table.insert(historyEntries, 1, {
+function BananaLootRaider_UI:RefreshHistory()
+    local shown = 0
+    local ng = table.getn(historyGroups)
+    for gi = 1, ng do
+        local g = historyGroups[gi]
+        shown = shown + 1
+        local row = GetHistoryRow(shown)
+        SetRowMode(row, true)
+        row.group = g
+        row.headText:SetText((g.expanded and "[-] " or "[+] ") .. g.name .. "  |cffaaaaaa(" .. table.getn(g.entries) .. ")|r")
+        row:Show()
+        if g.expanded then
+            for ei = 1, table.getn(g.entries) do
+                local entry = g.entries[ei]
+                shown = shown + 1
+                local er = GetHistoryRow(shown)
+                SetRowMode(er, false)
+                er.timeText:SetText(entry.time)
+                er.itemText:SetText(BananaLootRaider:ResolveItemDisplay(entry.itemID))
+                er.winnerText:SetText(BananaLootRaider:ColoredName(entry.winner))
+                local labelKey = HISTORY_POOL_LABEL_KEY[entry.poolCode]
+                er.poolText:SetText(labelKey and BananaLootRaider:L(labelKey) or (entry.poolCode or ""))
+                er:Show()
+            end
+        end
+    end
+    for i = shown + 1, table.getn(historyRows) do historyRows[i]:Hide() end
+
+    if shown == 0 then
+        local row = GetHistoryRow(1)
+        SetRowMode(row, true)
+        row.group = nil
+        row:EnableMouse(false)
+        row.headText:SetText(BananaLootRaider:L("HISTORY_EMPTY"))
+        row:Show()
+        shown = 1
+    end
+    historyOverflowText:SetText("")
+    historyChild:SetHeight(math.max(1, shown * HISTORY_ROW_H))
+    historyScroll:UpdateScrollChildRect()
+end
+local function RefreshHistoryList() BananaLootRaider_UI:RefreshHistory() end
+
+function BananaLootRaider_UI:AddHistoryEntry(itemID, winner, poolCode, source)
+    if not source or source == "" then source = BananaLootRaider:L("HISTORY_UNKNOWN_SOURCE") end
+    local g = historyGroups[1]
+    if not g or g.name ~= source then
+        -- neue Gruppe: neueste aufgeklappt, die bisherigen bleiben wie sie sind
+        g = { name = source, expanded = true, entries = {} }
+        table.insert(historyGroups, 1, g)
+    end
+    table.insert(g.entries, 1, {
         time = date("%H:%M"),
         itemID = itemID,
         winner = winner,
         poolCode = poolCode,
     })
+    -- Gesamtzahl begrenzen: aelteste Gruppen/Eintraege verwerfen
+    local total = 0
+    for gi = 1, table.getn(historyGroups) do total = total + table.getn(historyGroups[gi].entries) end
+    while total > HISTORY_MAX and table.getn(historyGroups) > 0 do
+        local last = historyGroups[table.getn(historyGroups)]
+        table.remove(last.entries)
+        total = total - 1
+        if table.getn(last.entries) == 0 then table.remove(historyGroups) end
+    end
     if historyFrame:IsShown() then RefreshHistoryList() end
 end
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4
+
+- Neu: Loot-Historie nach Boss/Mob gruppiert. Jede bekaempfte Quelle erscheint als Kopfzeile (mit Anzahl); Anklicken klappt den Loot auf/zu. Die Quelle kommt von BananaLoot ab v3.47 (aeltere Versionen: "Unbekannte Quelle").
+- Fix: Scrollen in der Loot-Historie funktioniert (Mausrad und Scrollleiste).
+- Texte in den Kaestchen sind jetzt in jeder Spalte zentriert.
+
 Alle nennenswerten Änderungen an BananaLoot Raider werden hier
 festgehalten.
 
