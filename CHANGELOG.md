@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.5
+
+- Neu: Kleine Sprach-Buttons "DE" / "EN" rechts oben neben dem Schliessen-Kreuz der Loot-Historie; ein Klick schaltet sofort um (aktive Sprache golden).
+- Neu: Gleichnamige Mobs, die nacheinander getoetet und gelootet werden, erscheinen als getrennte Gruppen (BananaLoot ab v3.48 sendet eine Kill-Nummer mit). Die Kopfzeile zeigt zusaetzlich die Uhrzeit der ersten Vergabe.
+
 ## v1.4
 
 - Neu: Loot-Historie nach Boss/Mob gruppiert. Jede bekaempfte Quelle erscheint als Kopfzeile (mit Anzahl); Anklicken klappt den Loot auf/zu. Die Quelle kommt von BananaLoot ab v3.47 (aeltere Versionen: "Unbekannte Quelle").

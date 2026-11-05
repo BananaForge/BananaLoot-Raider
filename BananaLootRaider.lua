@@ -11,7 +11,7 @@
 -- Vergabe und keine Loot-Fenster-Logik.
 
 BananaLootRaider = {}
-BananaLootRaider.VERSION = "1.4"
+BananaLootRaider.VERSION = "1.5"
 
 -- ============================================================
 -- 1) DATENBANK / SAVEDVARIABLES
@@ -647,7 +647,7 @@ end
 --   RT~itemID~Namen(Komma-getrennt)       Gleichstand, nur diese Spieler rollen erneut
 --   RW~itemID~Gewinner~Score~Wurf~Pool    Roll abgeschlossen (Pool: ms/os/tmog)
 --   RC~itemID~Grund                       Abgebrochen (Grund: 0 manuell, 1 niemand gerollt)
---   AW~itemID~Gewinner~PoolCode[~Quelle]  Vergabe (fuer geteilte Loot-Historie; Quelle = Boss/Mob)
+--   AW~itemID~Gewinner~PoolCode[~Quelle~KillNr]  Vergabe (fuer geteilte Loot-Historie; Quelle = Boss/Mob)
 --   TT~itemID~Von~An                      Trade-Tracking-Weitergabe
 --   RL~Schluessel                         Raidlead-Ansage eines anderen Clients
 --                                         (nur Lootmaster-Feature, wird ignoriert)
@@ -769,7 +769,7 @@ function BananaLootRaider:HandleRollSyncMessage(text, sender)
 
     if msgType == "AW" then
         if not isSelf and BananaLootRaider_UI and BananaLootRaider_UI.AddHistoryEntry then
-            BananaLootRaider_UI:AddHistoryEntry(tonumber(fields[2]), fields[3], fields[4], fields[5])
+            BananaLootRaider_UI:AddHistoryEntry(tonumber(fields[2]), fields[3], fields[4], fields[5], fields[6])
         end
         -- Merkt sich auf JEDEM Client mit aktiviertem Trade-Tracking (nicht
         -- nur beim Lootmaster) den aktuellen Besitzer eines ueber BananaLoot

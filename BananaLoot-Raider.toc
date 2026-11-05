@@ -10,7 +10,7 @@
 ## Title: BananaLoot Raider |cff33ff99(SR/Roll-Sync fuer Raider)|r
 ## Notes: Schlankes Begleit-Addon zu BananaLoot fuer Raider (kein Masterloot). Roll-Sync-Popup, geteilte Loot-Historie, SR/unSR-Komfort per Shift-Klick.
 ## Author: Du
-## Version: 1.4
+## Version: 1.5
 ## SavedVariables: BananaLootRaider_DB
 
 BananaLootRaiderTheme.lua

@@ -407,6 +407,37 @@ historyCloseBtn:SetScript("OnClick", function()
     this:GetParent():Hide()
 end)
 
+-- Kleine Sprach-Buttons "DE" / "EN" neben dem Schliessen-Kreuz (aktive Sprache golden)
+local historyLangEn = CreateFrame("Button", "BananaLootRaiderHistoryLangEn", historyFrame, "UIPanelButtonTemplate")
+historyLangEn:SetWidth(30)
+historyLangEn:SetHeight(18)
+historyLangEn:SetPoint("TOPRIGHT", historyFrame, "TOPRIGHT", -40, -9)
+historyLangEn:SetText("EN")
+local historyLangDe = CreateFrame("Button", "BananaLootRaiderHistoryLangDe", historyFrame, "UIPanelButtonTemplate")
+historyLangDe:SetWidth(30)
+historyLangDe:SetHeight(18)
+historyLangDe:SetPoint("RIGHT", historyLangEn, "LEFT", -2, 0)
+historyLangDe:SetText("DE")
+function BananaLootRaider_UI:UpdateLangButtons()
+    local fd = historyLangDe.GetFontString and historyLangDe:GetFontString()
+    local fe = historyLangEn.GetFontString and historyLangEn:GetFontString()
+    if not (fd and fe) then return end
+    if BananaLootRaider:GetLanguage() == "en" then
+        fd:SetTextColor(0.5, 0.5, 0.5); fe:SetTextColor(1, 0.82, 0)
+    else
+        fd:SetTextColor(1, 0.82, 0); fe:SetTextColor(0.5, 0.5, 0.5)
+    end
+end
+local function PickLanguage(code)
+    BananaLootRaider:PlayClickSound()
+    BananaLootRaider:SetLanguage(code)
+    DEFAULT_CHAT_FRAME:AddMessage(BananaLootRaider:L("OPT_LANGUAGE_SET"))
+    if BananaLootRaider_UI.ApplyLocaleAll then BananaLootRaider_UI:ApplyLocaleAll() end
+end
+historyLangDe:SetScript("OnClick", function() PickLanguage("de") end)
+historyLangEn:SetScript("OnClick", function() PickLanguage("en") end)
+BananaLootRaider_UI:UpdateLangButtons()
+
 -- Obere Buttonzeile (jeder Button haengt am vorherigen, in dieser Reihenfolge erzeugt):
 -- Optionen | SR einreichen (Raid-Code) | Whisper-SR | ?
 local historyOptBtn = CreateFrame("Button", "BananaLootRaiderHistoryOptBtn", historyFrame, "UIPanelButtonTemplate")
@@ -613,7 +644,7 @@ function BananaLootRaider_UI:RefreshHistory()
         local row = GetHistoryRow(shown)
         SetRowMode(row, true)
         row.group = g
-        row.headText:SetText((g.expanded and "[-] " or "[+] ") .. g.name .. "  |cffaaaaaa(" .. table.getn(g.entries) .. ")|r")
+        row.headText:SetText((g.expanded and "[-] " or "[+] ") .. g.name .. "  |cffaaaaaa" .. (g.time or "") .. "  (" .. table.getn(g.entries) .. ")|r")
         row:Show()
         if g.expanded then
             for ei = 1, table.getn(g.entries) do
@@ -647,14 +678,23 @@ function BananaLootRaider_UI:RefreshHistory()
 end
 local function RefreshHistoryList() BananaLootRaider_UI:RefreshHistory() end
 
-function BananaLootRaider_UI:AddHistoryEntry(itemID, winner, poolCode, source)
-    if not source or source == "" then source = BananaLootRaider:L("HISTORY_UNKNOWN_SOURCE") end
+function BananaLootRaider_UI:AddHistoryEntry(itemID, winner, poolCode, source, seq)
+    local unknown = (not source or source == "")
+    if unknown then source = "?" end
+    seq = tonumber(seq) or 0
+    local now = GetTime and GetTime() or 0
     local g = historyGroups[1]
-    if not g or g.name ~= source then
+    -- gleiche Gruppe: gleicher Mob UND gleiche Kill-Nummer (gleichnamige, nacheinander getoetete Mobs
+    -- bleiben getrennt); ohne Kill-Nummer (aeltere BananaLoot-Version) trennt eine Pause von 5 Minuten
+    local same = g and g.src == source and g.seq == seq
+    if same and seq == 0 and (now - (g.last or now)) > 300 then same = false end
+    if not same then
         -- neue Gruppe: neueste aufgeklappt, die bisherigen bleiben wie sie sind
-        g = { name = source, expanded = true, entries = {} }
+        g = { src = source, seq = seq, name = unknown and BananaLootRaider:L("HISTORY_UNKNOWN_SOURCE") or source,
+              expanded = true, entries = {}, time = date("%H:%M") }
         table.insert(historyGroups, 1, g)
     end
+    g.last = now
     table.insert(g.entries, 1, {
         time = date("%H:%M"),
         itemID = itemID,
@@ -989,6 +1029,8 @@ end)
 -- 8) ZENTRALER SPRACH-EINSTIEGSPUNKT (auch fuer Extra.lua)
 -- ============================================================
 function BananaLootRaider_UI:ApplyLocaleAll()
+    if self.UpdateLangButtons then self:UpdateLangButtons() end
+    if self.RefreshHistory then self:RefreshHistory() end
     historySubmitBtn:SetText(BananaLootRaider:L("UI_BTN_SR_SUBMIT"))
     historySrBtn:SetText(BananaLootRaider:L("UI_BTN_SR_WHISPER"))
     if BananaLootRaider.ApplyLocaleCode then BananaLootRaider:ApplyLocaleCode() end
