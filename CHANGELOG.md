@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.11
+
+- Neu: Modell-Liste fuer das Boss-Fenster/den Boss-Test aus den Client-Tabellen (CreatureDisplayInfo/CreatureModelData des Turtle-Clients) und der Classic-Datenbank erzeugt: **65 Bosse** haben jetzt ein 3D-Modell (vorher 9). Humanoide Bosse (Trolle, Menschen, Orcs) und die Turtle-Custom-Bosse fehlen weiterhin; im echten Kampf zeigt das Fenster aber immer das Modell des anvisierten Ziels. Bosse, die sich ein Modell teilen, zeigen ueber den Pfad das Standard-Aussehen.
+
 ## v1.10
 
 - Neu: **3D-Modell im Boss-Fenster.** Links neben dem Text erscheint das animierte Spielmodell des Bosses (Fenster wird breiter). Im echten Kampf zeigt es das **anvisierte Ziel** (funktioniert fuer jeden Boss, auch Turtle-Bosse); im Boss-Test und ohne Ziel kommt das Modell aus einer Pfad-Liste (`BananaLootRaiderBossModels.lua`, Pfade aus dem Community-Listfile) - aktuell fuer Ragnaros, Onyxia, Nefarian, Hakkar, Kel'Thuzad, Taerar, Lethon, Anubisath Defender, Echo of Medivh. Bosse ohne Eintrag zeigen im Test kein Modell. Mit +/- zoomen, mit < > drehen, ~ = Dauerdrehung; die Einstellung wird pro Boss gespeichert (`/blr modeltune` gibt sie aus). Ein/aus: Raider-Optionen "3D-Modell des Bosses im Boss-Fenster zeigen" (Standard: an). Im Boss-Test sind Bosse mit Modell mit [3D] markiert.
