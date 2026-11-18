@@ -14,6 +14,7 @@ local function DB()
     local d = BananaLootRaider_DB
     if not d.bossTexts then d.bossTexts = {} end
     if not d.bossHidden then d.bossHidden = {} end
+    if not d.modelTune then d.modelTune = {} end
     return d
 end
 
@@ -29,6 +30,16 @@ function BananaLootRaider:SetBossHelpEnabled(v)
     BananaLootRaider.EnsureDB()
     BananaLootRaider_DB.settings.bossHelp = v and true or false
 end
+function BananaLootRaider:GetBossModelEnabled()
+    BananaLootRaider.EnsureDB()
+    if BananaLootRaider_DB.settings.bossModel == nil then return true end
+    return BananaLootRaider_DB.settings.bossModel
+end
+function BananaLootRaider:SetBossModelEnabled(v)
+    BananaLootRaider.EnsureDB()
+    BananaLootRaider_DB.settings.bossModel = v and true or false
+end
+
 function BananaLootRaider:GetBossHelpRole()
     BananaLootRaider.EnsureDB()
     return BananaLootRaider_DB.settings.bossHelpRole or "auto"
@@ -389,6 +400,95 @@ end)
 F.hideLabel = F:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 F.hideLabel:SetPoint("LEFT", F.hideCheck, "RIGHT", 2, 1)
 
+-- 3D-Modell des Bosses (links neben dem Text): im Kampf das anvisierte Ziel, sonst ein Modell aus der Liste
+F.modelHolder = CreateFrame("Frame", "BananaLootRaiderBossModelHolder", F)
+F.modelHolder:SetWidth(144)
+F.modelHolder:SetHeight(196)
+F.modelHolder:SetPoint("TOPLEFT", F, "TOPLEFT", 20, -84)
+F.modelHolder:SetBackdrop({
+    bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true, tileSize = 16, edgeSize = 12,
+    insets = { left = 3, right = 3, top = 3, bottom = 3 },
+})
+F.modelHolder:SetBackdropColor(0, 0, 0, 0.7)
+F.modelHolder:Hide()
+F.model = CreateFrame("PlayerModel", "BananaLootRaiderBossModel", F.modelHolder)
+F.model:SetPoint("TOPLEFT", F.modelHolder, "TOPLEFT", 4, -4)
+F.model:SetPoint("BOTTOMRIGHT", F.modelHolder, "BOTTOMRIGHT", -4, 4)
+F.modelBtns = {}
+local function ModelBtn(text, x, fn)
+    local b = CreateFrame("Button", nil, F.modelHolder, "UIPanelButtonTemplate")
+    b:SetWidth(30)
+    b:SetHeight(20)
+    b:SetPoint("TOPLEFT", F.modelHolder, "BOTTOMLEFT", x, -2)
+    b:SetText(text)
+    b:SetScript("OnClick", function() BananaLootRaider:PlayClickSound(); fn() end)
+    table.insert(F.modelBtns, b)
+    return b
+end
+local function Tune()
+    if not F.key then return nil end
+    local d = DB()
+    if not d.modelTune[F.key] then d.modelTune[F.key] = {} end
+    return d.modelTune[F.key]
+end
+local function ApplyModelTune()
+    local tune = F.key and DB().modelTune[F.key] or nil
+    local entry = F.key and BananaLootRaider_BossModels and BananaLootRaider_BossModels[F.key] or nil
+    local scale = (tune and tune.scale) or (entry and entry.scale) or 1
+    local facing = (tune and tune.facing) or 0
+    pcall(function() F.model:SetModelScale(scale) end)
+    pcall(function() F.model:SetFacing(facing) end)
+    F.facing = facing
+end
+ModelBtn("-", 0, function() local t = Tune(); if t then t.scale = (t.scale or 1) * 0.8; ApplyModelTune() end end)
+ModelBtn("+", 32, function() local t = Tune(); if t then t.scale = (t.scale or 1) * 1.25; ApplyModelTune() end end)
+ModelBtn("<", 64, function() local t = Tune(); if t then t.facing = (t.facing or 0) - 0.4; ApplyModelTune() end end)
+ModelBtn(">", 96, function() local t = Tune(); if t then t.facing = (t.facing or 0) + 0.4; ApplyModelTune() end end)
+F.rotating = false
+F.rotBtn = ModelBtn("~", 128, function() F.rotating = not F.rotating end)
+F.rotBtn:SetWidth(16)
+F:SetScript("OnUpdate", function()
+    if F.rotating and F.modelHolder:IsShown() then
+        F.facing = (F.facing or 0) + (arg1 or 0) * 0.6
+        pcall(function() F.model:SetFacing(F.facing) end)
+    end
+end)
+
+-- Passt der Name des Ziels zu einem der Gegner-Namen dieses Bosses?
+local function TargetIsBoss(boss)
+    if not UnitExists("target") or UnitIsPlayer("target") then return false end
+    local n = UnitName("target")
+    for u = 1, table.getn(boss.units or {}) do
+        if boss.units[u] == n then return true end
+    end
+    return false
+end
+
+-- Modell setzen. Rueckgabe: true, wenn ein Modell gezeigt wird.
+function BananaLootRaider:ApplyBossModel()
+    F.modelHolder:Hide()
+    F.hasModel = false
+    if not F.bossObj or not self:GetBossModelEnabled() then return false end
+    local entry = BananaLootRaider_BossModels and BananaLootRaider_BossModels[F.key] or nil
+    if TargetIsBoss(F.bossObj) then
+        F.hasModel = true
+        F.modelSource = "unit"
+        pcall(function() F.model:SetUnit("target") end)
+    elseif entry then
+        F.hasModel = true
+        F.modelSource = "path"
+        pcall(function() F.model:SetModel(entry.path) end)
+    end
+    if F.hasModel then
+        pcall(function() F.model:SetCamera(0) end)
+        ApplyModelTune()
+        F.modelHolder:Show()
+    end
+    return F.hasModel
+end
+
 local function Estimate(text)
     local lines = 0
     local pos = 1
@@ -419,10 +519,28 @@ function BananaLootRaider:RefreshBossFrame()
         end
     end
     body = string.gsub(body, "%s+$", "")
+    -- Modell links (nur beim ersten Aufbau fuer diesen Boss neu setzen), Text rechts daneben
+    if F.modelKey ~= F.key or F.modelDirty then
+        self:ApplyBossModel()
+        F.modelKey = F.key
+        F.modelDirty = false
+    end
+    F.body:ClearAllPoints()
+    if F.hasModel then
+        F:SetWidth(540)
+        F.body:SetPoint("TOPLEFT", F, "TOPLEFT", 176, -84)
+        F.body:SetWidth(342)
+    else
+        F:SetWidth(380)
+        F.body:SetPoint("TOPLEFT", F, "TOPLEFT", 22, -84)
+        F.body:SetWidth(336)
+    end
     F.body:SetText(body)
     local h = F.body:GetHeight()
     if not h or h < 14 then h = Estimate(body) end
-    F:SetHeight(84 + h + 54)
+    local need = 84 + h + 54
+    if F.hasModel and need < 84 + 196 + 30 + 54 then need = 84 + 196 + 30 + 54 end
+    F:SetHeight(need)
     F.hideCheck:SetChecked(DB().bossHidden[F.key] and true or false)
 end
 
@@ -437,6 +555,7 @@ function BananaLootRaider:ShowBossHelp(raid, boss, field, force)
     end
     local same = F:IsShown() and F.key == key
     F.raidObj, F.bossObj, F.key = raid, boss, key
+    if not same then F.modelDirty = true end
     if not same then F.onlyMine = false; F.showSecond = false end
     if field == "m2" then F.showSecond = true end
     self.bossShown[key] = GetTime()
@@ -530,6 +649,16 @@ ev:SetScript("OnUpdate", function()
 end)
 
 -- ------------------------------------------------------------
+-- /blr modeltune: gespeicherte Zoom-/Drehwerte ausgeben (zum Weitergeben)
+function BananaLootRaider:PrintModelTune()
+    local any = false
+    for k, t in pairs(DB().modelTune) do
+        DEFAULT_CHAT_FRAME:AddMessage(string.format('["%s"] = { scale = %.2f, facing = %.2f }', k, t.scale or 1, t.facing or 0))
+        any = true
+    end
+    if not any then DEFAULT_CHAT_FRAME:AddMessage("|cff33ff99BananaLoot Raider|r: keine gespeicherten Modell-Einstellungen") end
+end
+
 -- /blr boss [Name|reset]  -- Vorschau bzw. ausgeblendete Bosse zuruecksetzen
 -- ------------------------------------------------------------
 function BananaLootRaider:BossSlash(arg)
@@ -559,7 +688,7 @@ end
 -- ------------------------------------------------------------
 local optFrame = getglobal("BananaLootRaiderOptionsFrame")
 if optFrame then
-    optFrame:SetHeight(800)
+    optFrame:SetHeight(850)
     local O = {}
     O.check = CreateFrame("CheckButton", "BananaLootRaiderBossHelpCheck", optFrame, "UICheckButtonTemplate")
     O.check:SetPoint("TOPLEFT", optFrame, "TOPLEFT", 18, -650)
@@ -593,7 +722,22 @@ if optFrame then
         O.btns[i] = b
         prev = b
     end
+    O.modelCheck = CreateFrame("CheckButton", "BananaLootRaiderBossModelCheck", optFrame, "UICheckButtonTemplate")
+    O.modelCheck:SetPoint("TOPLEFT", optFrame, "TOPLEFT", 18, -786)
+    O.modelCheck:SetScript("OnClick", function()
+        BananaLootRaider:PlayClickSound()
+        BananaLootRaider:SetBossModelEnabled(O.modelCheck:GetChecked() and true or false)
+    end)
+    O.modelLabel = optFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    O.modelLabel:SetPoint("LEFT", O.modelCheck, "RIGHT", 2, 1)
+    O.modelHint = optFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    O.modelHint:SetPoint("TOPLEFT", optFrame, "TOPLEFT", 20, -814)
+    O.modelHint:SetWidth(420)
+    O.modelHint:SetJustifyH("LEFT")
     function BananaLootRaider_BossOptRefresh()
+        O.modelCheck:SetChecked(BananaLootRaider:GetBossModelEnabled())
+        O.modelLabel:SetText(BananaLootRaider:L("BH_MODEL_OPT"))
+        O.modelHint:SetText(BananaLootRaider:L("BH_MODEL_HINT"))
         O.check:SetChecked(BananaLootRaider:GetBossHelpEnabled())
         O.label:SetText(BananaLootRaider:L("BH_OPT_ENABLE"))
         O.hint:SetText(BananaLootRaider:L("BH_OPT_HINT"))

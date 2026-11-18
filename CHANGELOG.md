@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.10
+
+- Neu: **3D-Modell im Boss-Fenster.** Links neben dem Text erscheint das animierte Spielmodell des Bosses (Fenster wird breiter). Im echten Kampf zeigt es das **anvisierte Ziel** (funktioniert fuer jeden Boss, auch Turtle-Bosse); im Boss-Test und ohne Ziel kommt das Modell aus einer Pfad-Liste (`BananaLootRaiderBossModels.lua`, Pfade aus dem Community-Listfile) - aktuell fuer Ragnaros, Onyxia, Nefarian, Hakkar, Kel'Thuzad, Taerar, Lethon, Anubisath Defender, Echo of Medivh. Bosse ohne Eintrag zeigen im Test kein Modell. Mit +/- zoomen, mit < > drehen, ~ = Dauerdrehung; die Einstellung wird pro Boss gespeichert (`/blr modeltune` gibt sie aus). Ein/aus: Raider-Optionen "3D-Modell des Bosses im Boss-Fenster zeigen" (Standard: an). Im Boss-Test sind Bosse mit Modell mit [3D] markiert.
+
 ## v1.9
 
 - Neu: **Rolle und Klasse hervorgehoben.** Das Boss-Info-Fenster prueft zuerst, wer du bist (Klasse, Talentbaum, Rolle Tank/DD/Heiler), teilt jeden Boss-Text satzweise ein und zeigt oben **"FUER DICH"** (gelb hervorgehoben, mit ">") - alles, was deine Rolle oder deine Klasse betrifft (z.B. Taunt/Tankwechsel fuer Tanks, Tranquilizing Shot fuer Jaeger, Decursen fuer Druide/Magier, Fear Ward fuer Priester, Tremor Totem fuer Schamanen). Darunter "Fuer alle", ganz unten gedaempft, was nur andere Rollen/Klassen betrifft. Knopf "Nur fuer mich" blendet den letzten Teil aus. Die Kopfzeile nennt Rolle, Klasse und Talentbaum.
