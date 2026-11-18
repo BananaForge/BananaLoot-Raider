@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.7
+
+- Fix: Lua-Fehler `attempt to call method 'SetVerticalScroll' (a nil value)` im Raid-Code-Fenster auf neueren Clients (nach dem OctoWow-Update, ohne pfUI). Der eigene Handler der Scrollleiste wird jetzt vor dem Setzen der Werte eingebaut.
+
 ## v1.6
 
 - Neu: **Boss-Hilfen als Fenster.** Vor einem Boss erscheint ein kleines Fenster mit der Erklaerung - nur fuer DEINE Rolle (Tank / DD / Heiler; "Alle"-Hinweise immer dabei). Die Rolle wird ueber die Talente erkannt oder in den Optionen festgelegt; ein Knopf zeigt bei Bedarf alle Rollen. Ausloeser: die Ansage des Raidleiters (BananaLoot ab v3.51), sonst - als Fallback - das Anvisieren des Bosses (nach 3 Sekunden, nur in Gruppe/Raid). Das Fenster schliesst sich per X oder bei Kampfbeginn.
