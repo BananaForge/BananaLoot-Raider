@@ -11,7 +11,25 @@
 -- Vergabe und keine Loot-Fenster-Logik.
 
 BananaLootRaider = {}
-BananaLootRaider.VERSION = "1.13"
+BananaLootRaider.VERSION = "1.14"
+
+-- Ordnername des Addons im Spiel (der Download von GitHub heisst "BananaLoot-Raider", die Anleitung "BananaLootRaider"):
+-- aus dem Dateipfad des Aufrufstapels gelesen, damit Icons/Logo in beiden Faellen gefunden werden.
+do
+    local ok, stack = pcall(debugstack)
+    local dir = nil
+    if ok and stack then
+        local _, _, d = string.find(stack, "AddOns[\\/]([^\\/]+)[\\/]")
+        dir = d
+    end
+    BananaLootRaider.ADDON_DIR = dir or "BananaLootRaider"
+end
+function BananaLootRaider.IconPath(name)
+    return "Interface\\AddOns\\" .. BananaLootRaider.ADDON_DIR .. "\\Icons\\" .. name
+end
+function BananaLootRaider.IsOwnAddon(name)
+    return name == "BananaLootRaider" or name == "BananaLoot-Raider" or name == BananaLootRaider.ADDON_DIR
+end
 
 -- ============================================================
 -- 1) DATENBANK / SAVEDVARIABLES
@@ -877,7 +895,7 @@ eventFrame:RegisterEvent("PARTY_MEMBERS_CHANGED")
 eventFrame:RegisterEvent("TRADE_ACCEPT_UPDATE")
 
 eventFrame:SetScript("OnEvent", function()
-    if event == "ADDON_LOADED" and arg1 == "BananaLootRaider" then
+    if event == "ADDON_LOADED" and BananaLootRaider.IsOwnAddon(arg1) then
         EnsureDB()
         DEFAULT_CHAT_FRAME:AddMessage(string.format(BananaLootRaider:L("MSG_ADDON_LOADED"), BananaLootRaider.VERSION))
         if BananaLootRaider_UI and BananaLootRaider_UI.ApplyLocaleAll then BananaLootRaider_UI:ApplyLocaleAll() end

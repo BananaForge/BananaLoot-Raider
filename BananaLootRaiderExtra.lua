@@ -37,7 +37,7 @@ local optLogo = optFrame:CreateTexture(nil, "ARTWORK")
 optLogo:SetWidth(100)
 optLogo:SetHeight(100)
 optLogo:SetPoint("TOP", optFrame, "TOP", 0, -8)
-optLogo:SetTexture("Interface\\AddOns\\BananaLootRaider\\Icons\\BananaLootRaider_Logo_256")
+optLogo:SetTexture(BananaLootRaider.IconPath("BananaLootRaider_Logo_256"))
 
 local optCloseBtn = CreateFrame("Button", "BananaLootRaiderOptionsCloseButton", optFrame, "UIPanelCloseButton")
 optCloseBtn:SetPoint("TOPRIGHT", optFrame, "TOPRIGHT", -4, -4)

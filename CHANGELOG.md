@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.14
+
+- Fix: Das Raider-Symbol (Minimap-Button, Fenster-Titel, Optionen-Logo) fehlte, wenn der Addon-Ordner "BananaLoot-Raider" heisst (so heisst der Download von GitHub) statt "BananaLootRaider": der Bildpfad war fest verdrahtet. Der Ordnername wird jetzt automatisch erkannt. Ausserdem lief die Start-Initialisierung (ADDON_LOADED) nur beim Ordnernamen "BananaLootRaider" - jetzt auch bei "BananaLoot-Raider".
+
 ## v1.13
 
 - Aenderung: Modell-Kalibrierung im Boss-Fenster. Die Position/Groesse der Pfad-Modelle liess sich nicht zuverlaessig raten, deshalb gibt es jetzt unter dem Modell zwei Reihen Knoepfe: S-/S+ (Groesse), T-/T+ (Tiefe), < > (drehen), ^ v (hoch/runter), L R (links/rechts), K (Kamera-Modus: K1 = Portrait-Kamera, K2 = Standardkamera), ~ (Dauerdrehung), 0 (zuruecksetzen) und eine Anzeige der aktuellen Werte. Alles wird pro Boss gespeichert; `/blr modeltune` gibt die Werte zum Weitergeben aus. Standard ist K1 (Portrait-Kamera, Modell immer im Bild).
