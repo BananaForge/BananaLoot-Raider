@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.12
+
+- Fix: Boss-Modelle waren im Boss-Test komplett weiss und zu nah herangezoomt. Ueber einen Dateipfad laedt das Spiel Modelle **ohne Texturen** - das laesst sich mit der 1.12-Schnittstelle nicht aendern. Deshalb werden Pfad-Modelle jetzt ueber das Modell-Licht **thematisch eingefaerbt** (Feuer orange, Frost blau, Gift gruen, Untote violett, Sand gelblich ...), und der Start-Zoom richtet sich nach der Modellgroesse (Groessenklasse aus den Client-Tabellen). Zusaetzliche Knoepfe `^`/`v` verschieben das Modell hoch/runter; `+`/`-` zoomen, `<`/`>` drehen. Im echten Kampf (anvisiertes Ziel) bleiben die echten Farben mit der Portrait-Kamera des Spiels.
+
 ## v1.11
 
 - Neu: Modell-Liste fuer das Boss-Fenster/den Boss-Test aus den Client-Tabellen (CreatureDisplayInfo/CreatureModelData des Turtle-Clients) und der Classic-Datenbank erzeugt: **65 Bosse** haben jetzt ein 3D-Modell (vorher 9). Humanoide Bosse (Trolle, Menschen, Orcs) und die Turtle-Custom-Bosse fehlen weiterhin; im echten Kampf zeigt das Fenster aber immer das Modell des anvisierten Ziels. Bosse, die sich ein Modell teilen, zeigen ueber den Pfad das Standard-Aussehen.

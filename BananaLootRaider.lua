@@ -11,7 +11,7 @@
 -- Vergabe und keine Loot-Fenster-Logik.
 
 BananaLootRaider = {}
-BananaLootRaider.VERSION = "1.11"
+BananaLootRaider.VERSION = "1.12"
 
 -- ============================================================
 -- 1) DATENBANK / SAVEDVARIABLES

@@ -436,19 +436,38 @@ end
 local function ApplyModelTune()
     local tune = F.key and DB().modelTune[F.key] or nil
     local entry = F.key and BananaLootRaider_BossModels and BananaLootRaider_BossModels[F.key] or nil
-    local scale = (tune and tune.scale) or (entry and entry.scale) or 1
+    -- Start-Zoom aus der Liste gilt nur fuer Pfad-Modelle (Standardkamera); das anvisierte Ziel nutzt die Portrait-Kamera
+    local scale = (tune and tune.scale) or (F.modelSource ~= "unit" and entry and entry.scale) or 1
     local facing = (tune and tune.facing) or 0
+    local z = (tune and tune.z) or 0
     pcall(function() F.model:SetModelScale(scale) end)
     pcall(function() F.model:SetFacing(facing) end)
+    pcall(function() F.model:SetPosition(0, 0, z) end)
     F.facing = facing
 end
-ModelBtn("-", 0, function() local t = Tune(); if t then t.scale = (t.scale or 1) * 0.8; ApplyModelTune() end end)
-ModelBtn("+", 32, function() local t = Tune(); if t then t.scale = (t.scale or 1) * 1.25; ApplyModelTune() end end)
-ModelBtn("<", 64, function() local t = Tune(); if t then t.facing = (t.facing or 0) - 0.4; ApplyModelTune() end end)
-ModelBtn(">", 96, function() local t = Tune(); if t then t.facing = (t.facing or 0) + 0.4; ApplyModelTune() end end)
+
+-- Modell-Licht: ueber einen Dateipfad geladene Modelle haben keine Texturen (weiss); ein farbiges Umgebungslicht
+-- faerbt sie thematisch ein. nil = neutrales Licht (anvisiertes Ziel: echte Texturen).
+F.ApplyModelLight = nil
+local function ApplyModelLight(tint)
+    local r, g, b = 1, 1, 1
+    if tint then r, g, b = tint[1], tint[2], tint[3] end
+    pcall(function() F.model:SetLight(1, 0, -1, -1, -1, 0.75, r, g, b, 0.9, r, g, b) end)
+end
+local function CurrentScale()
+    local t = F.key and DB().modelTune[F.key] or nil
+    local e = F.key and BananaLootRaider_BossModels and BananaLootRaider_BossModels[F.key] or nil
+    return (t and t.scale) or (F.modelSource ~= "unit" and e and e.scale) or 1
+end
+ModelBtn("-", 0, function() local t = Tune(); if t then t.scale = CurrentScale() * 0.8; ApplyModelTune() end end)
+ModelBtn("+", 21, function() local t = Tune(); if t then t.scale = CurrentScale() * 1.25; ApplyModelTune() end end)
+ModelBtn("<", 42, function() local t = Tune(); if t then t.facing = (t.facing or 0) - 0.4; ApplyModelTune() end end)
+ModelBtn(">", 63, function() local t = Tune(); if t then t.facing = (t.facing or 0) + 0.4; ApplyModelTune() end end)
+ModelBtn("^", 84, function() local t = Tune(); if t then t.z = (t.z or 0) - 0.15; ApplyModelTune() end end)
+ModelBtn("v", 105, function() local t = Tune(); if t then t.z = (t.z or 0) + 0.15; ApplyModelTune() end end)
 F.rotating = false
-F.rotBtn = ModelBtn("~", 128, function() F.rotating = not F.rotating end)
-F.rotBtn:SetWidth(16)
+F.rotBtn = ModelBtn("~", 126, function() F.rotating = not F.rotating end)
+for _, b in ipairs(F.modelBtns) do b:SetWidth(20) end
 F:SetScript("OnUpdate", function()
     if F.rotating and F.modelHolder:IsShown() then
         F.facing = (F.facing or 0) + (arg1 or 0) * 0.6
@@ -482,7 +501,12 @@ function BananaLootRaider:ApplyBossModel()
         pcall(function() F.model:SetModel(entry.path) end)
     end
     if F.hasModel then
-        pcall(function() F.model:SetCamera(0) end)
+        if F.modelSource == "unit" then
+            pcall(function() F.model:SetCamera(0) end)     -- Portrait-Kamera des Spiels, echte Texturen
+            ApplyModelLight(nil)
+        else
+            ApplyModelLight(entry and entry.tint)          -- Pfad-Modell: ohne Texturen, eingefaerbt
+        end
         ApplyModelTune()
         F.modelHolder:Show()
     end
@@ -653,7 +677,7 @@ end)
 function BananaLootRaider:PrintModelTune()
     local any = false
     for k, t in pairs(DB().modelTune) do
-        DEFAULT_CHAT_FRAME:AddMessage(string.format('["%s"] = { scale = %.2f, facing = %.2f }', k, t.scale or 1, t.facing or 0))
+        DEFAULT_CHAT_FRAME:AddMessage(string.format('["%s"] = { scale = %.2f, facing = %.2f, z = %.2f }', k, t.scale or 1, t.facing or 0, t.z or 0))
         any = true
     end
     if not any then DEFAULT_CHAT_FRAME:AddMessage("|cff33ff99BananaLoot Raider|r: keine gespeicherten Modell-Einstellungen") end
