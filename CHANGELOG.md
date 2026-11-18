@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.8
+
+- Aenderung: Boss-Texte ueberarbeitet (nach Recherche): Onyxia, Ebonroc, Baron Geddon, Lord Kazzak, Rend & Gyth, Bloodlord Mandokir, Ragnaros korrigiert; der Fuellsatz "Keine Fluche zu cleansen" ist aus allen Texten entfernt.
+- Fix: Hat ein Text keinen eigenen Abschnitt fuer die Rolle, aber einen allgemeinen Teil, erscheint nicht mehr der Hinweis "kein eigener Hinweis".
+
 ## v1.7
 
 - Fix: Lua-Fehler `attempt to call method 'SetVerticalScroll' (a nil value)` im Raid-Code-Fenster auf neueren Clients (nach dem OctoWow-Update, ohne pfUI). Der eigene Handler der Scrollleiste wird jetzt vor dem Setzen der Werte eingebaut.

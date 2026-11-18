@@ -192,7 +192,8 @@ function BananaLootRaider:BuildBossBody(text, role, showAll)
             out = out .. "|cffffd100" .. BananaLootRaider:L(ROLE_KEY[role]) .. ":|r " .. sg.text .. "\n"
         end
     end
-    if not mine then out = out .. BananaLootRaider:L("BH_NO_ROLE_TEXT") .. "\n" end
+    -- ohne eigenen Abschnitt: steht schon ein allgemeiner Text (intro/Alle) da, braucht es keinen Hinweis
+    if not mine and out == "" then out = out .. BananaLootRaider:L("BH_NO_ROLE_TEXT") .. "\n" end
     return out
 end
 
