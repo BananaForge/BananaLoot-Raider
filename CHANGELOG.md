@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.13
+
+- Aenderung: Modell-Kalibrierung im Boss-Fenster. Die Position/Groesse der Pfad-Modelle liess sich nicht zuverlaessig raten, deshalb gibt es jetzt unter dem Modell zwei Reihen Knoepfe: S-/S+ (Groesse), T-/T+ (Tiefe), < > (drehen), ^ v (hoch/runter), L R (links/rechts), K (Kamera-Modus: K1 = Portrait-Kamera, K2 = Standardkamera), ~ (Dauerdrehung), 0 (zuruecksetzen) und eine Anzeige der aktuellen Werte. Alles wird pro Boss gespeichert; `/blr modeltune` gibt die Werte zum Weitergeben aus. Standard ist K1 (Portrait-Kamera, Modell immer im Bild).
+
 ## v1.12
 
 - Fix: Boss-Modelle waren im Boss-Test komplett weiss und zu nah herangezoomt. Ueber einen Dateipfad laedt das Spiel Modelle **ohne Texturen** - das laesst sich mit der 1.12-Schnittstelle nicht aendern. Deshalb werden Pfad-Modelle jetzt ueber das Modell-Licht **thematisch eingefaerbt** (Feuer orange, Frost blau, Gift gruen, Untote violett, Sand gelblich ...), und der Start-Zoom richtet sich nach der Modellgroesse (Groessenklasse aus den Client-Tabellen). Zusaetzliche Knoepfe `^`/`v` verschieben das Modell hoch/runter; `+`/`-` zoomen, `<`/`>` drehen. Im echten Kampf (anvisiertes Ziel) bleiben die echten Farben mit der Portrait-Kamera des Spiels.

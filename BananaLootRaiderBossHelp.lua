@@ -417,13 +417,20 @@ F.model = CreateFrame("PlayerModel", "BananaLootRaiderBossModel", F.modelHolder)
 F.model:SetPoint("TOPLEFT", F.modelHolder, "TOPLEFT", 4, -4)
 F.model:SetPoint("BOTTOMRIGHT", F.modelHolder, "BOTTOMRIGHT", -4, 4)
 F.modelBtns = {}
-local function ModelBtn(text, x, fn)
+-- Kalibrierung: Knoepfe in zwei Reihen unter dem Modell; jede Aenderung wird pro Boss gespeichert (/blr modeltune).
+local function ModelBtn(text, col, row, tip, fn)
     local b = CreateFrame("Button", nil, F.modelHolder, "UIPanelButtonTemplate")
-    b:SetWidth(30)
+    b:SetWidth(22)
     b:SetHeight(20)
-    b:SetPoint("TOPLEFT", F.modelHolder, "BOTTOMLEFT", x, -2)
+    b:SetPoint("TOPLEFT", F.modelHolder, "BOTTOMLEFT", col * 24, -2 - row * 22)
     b:SetText(text)
     b:SetScript("OnClick", function() BananaLootRaider:PlayClickSound(); fn() end)
+    b:SetScript("OnEnter", function()
+        GameTooltip:SetOwner(this, "ANCHOR_TOP")
+        GameTooltip:SetText(tip, 1, 1, 1, 1, 1)
+        GameTooltip:Show()
+    end)
+    b:SetScript("OnLeave", function() GameTooltip:Hide() end)
     table.insert(F.modelBtns, b)
     return b
 end
@@ -433,41 +440,79 @@ local function Tune()
     if not d.modelTune[F.key] then d.modelTune[F.key] = {} end
     return d.modelTune[F.key]
 end
+
+-- Kamera-Modus: 1 = Portrait-Kamera des Modells (immer sichtbar), 2 = Standardkamera (Groesse/Position per Hand)
+local function CamMode()
+    local t = F.key and DB().modelTune[F.key] or nil
+    if F.modelSource == "unit" then return 1 end
+    return (t and t.cam) or 1
+end
+local function BaseScale()
+    local e = F.key and BananaLootRaider_BossModels and BananaLootRaider_BossModels[F.key] or nil
+    if F.modelSource ~= "unit" and CamMode() == 2 and e and e.scale then return e.scale end
+    return 1
+end
+local function CurrentScale()
+    local t = F.key and DB().modelTune[F.key] or nil
+    return (t and t.scale) or BaseScale()
+end
+
+local function UpdateReadout()
+    local t = F.key and DB().modelTune[F.key] or nil
+    F.modelInfo:SetText(string.format("K%d S%.2f T%.1f H%.1f V%.1f", CamMode(), CurrentScale(),
+        (t and t.d) or 0, (t and t.h) or 0, (t and t.z) or 0))
+end
+
 local function ApplyModelTune()
     local tune = F.key and DB().modelTune[F.key] or nil
-    local entry = F.key and BananaLootRaider_BossModels and BananaLootRaider_BossModels[F.key] or nil
-    -- Start-Zoom aus der Liste gilt nur fuer Pfad-Modelle (Standardkamera); das anvisierte Ziel nutzt die Portrait-Kamera
-    local scale = (tune and tune.scale) or (F.modelSource ~= "unit" and entry and entry.scale) or 1
     local facing = (tune and tune.facing) or 0
-    local z = (tune and tune.z) or 0
-    pcall(function() F.model:SetModelScale(scale) end)
+    if CamMode() == 1 then pcall(function() F.model:SetCamera(0) end) end
+    pcall(function() F.model:SetModelScale(CurrentScale()) end)
     pcall(function() F.model:SetFacing(facing) end)
-    pcall(function() F.model:SetPosition(0, 0, z) end)
+    pcall(function() F.model:SetPosition((tune and tune.d) or 0, (tune and tune.h) or 0, (tune and tune.z) or 0) end)
     F.facing = facing
+    UpdateReadout()
 end
 
 -- Modell-Licht: ueber einen Dateipfad geladene Modelle haben keine Texturen (weiss); ein farbiges Umgebungslicht
 -- faerbt sie thematisch ein. nil = neutrales Licht (anvisiertes Ziel: echte Texturen).
-F.ApplyModelLight = nil
 local function ApplyModelLight(tint)
     local r, g, b = 1, 1, 1
     if tint then r, g, b = tint[1], tint[2], tint[3] end
     pcall(function() F.model:SetLight(1, 0, -1, -1, -1, 0.75, r, g, b, 0.9, r, g, b) end)
 end
-local function CurrentScale()
-    local t = F.key and DB().modelTune[F.key] or nil
-    local e = F.key and BananaLootRaider_BossModels and BananaLootRaider_BossModels[F.key] or nil
-    return (t and t.scale) or (F.modelSource ~= "unit" and e and e.scale) or 1
+
+local function Bump(field, delta, mul)
+    local t = Tune()
+    if not t then return end
+    if mul then t[field] = CurrentScale() * delta else t[field] = (t[field] or 0) + delta end
+    ApplyModelTune()
 end
-ModelBtn("-", 0, function() local t = Tune(); if t then t.scale = CurrentScale() * 0.8; ApplyModelTune() end end)
-ModelBtn("+", 21, function() local t = Tune(); if t then t.scale = CurrentScale() * 1.25; ApplyModelTune() end end)
-ModelBtn("<", 42, function() local t = Tune(); if t then t.facing = (t.facing or 0) - 0.4; ApplyModelTune() end end)
-ModelBtn(">", 63, function() local t = Tune(); if t then t.facing = (t.facing or 0) + 0.4; ApplyModelTune() end end)
-ModelBtn("^", 84, function() local t = Tune(); if t then t.z = (t.z or 0) - 0.15; ApplyModelTune() end end)
-ModelBtn("v", 105, function() local t = Tune(); if t then t.z = (t.z or 0) + 0.15; ApplyModelTune() end end)
+ModelBtn("S-", 0, 0, "Kleiner", function() Bump("scale", 0.8, true) end)
+ModelBtn("S+", 1, 0, "Groesser", function() Bump("scale", 1.25, true) end)
+ModelBtn("T-", 2, 0, "Weiter weg (Tiefe)", function() Bump("d", -1) end)
+ModelBtn("T+", 3, 0, "Naeher (Tiefe)", function() Bump("d", 1) end)
+ModelBtn("<", 4, 0, "Nach links drehen", function() Bump("facing", -0.4) end)
+ModelBtn(">", 5, 0, "Nach rechts drehen", function() Bump("facing", 0.4) end)
+ModelBtn("^", 0, 1, "Hoeher", function() Bump("z", -0.4) end)
+ModelBtn("v", 1, 1, "Tiefer", function() Bump("z", 0.4) end)
+ModelBtn("L", 2, 1, "Nach links schieben", function() Bump("h", 0.4) end)
+ModelBtn("R", 3, 1, "Nach rechts schieben", function() Bump("h", -0.4) end)
+F.camBtn = ModelBtn("K", 4, 1, "Kamera-Modus wechseln (K1 = Portrait-Kamera, K2 = Standardkamera)", function()
+    local t = Tune()
+    if not t then return end
+    t.cam = (CamMode() == 1) and 2 or 1
+    t.scale = nil
+    BananaLootRaider:ApplyBossModel()
+end)
 F.rotating = false
-F.rotBtn = ModelBtn("~", 126, function() F.rotating = not F.rotating end)
-for _, b in ipairs(F.modelBtns) do b:SetWidth(20) end
+F.rotBtn = ModelBtn("~", 5, 1, "Dauerdrehung an/aus", function() F.rotating = not F.rotating end)
+ModelBtn("0", 0, 2, "Einstellungen dieses Bosses zuruecksetzen", function()
+    if F.key then DB().modelTune[F.key] = nil end
+    BananaLootRaider:ApplyBossModel()
+end)
+F.modelInfo = F.modelHolder:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+F.modelInfo:SetPoint("LEFT", F.modelBtns[table.getn(F.modelBtns)], "RIGHT", 6, 0)
 F:SetScript("OnUpdate", function()
     if F.rotating and F.modelHolder:IsShown() then
         F.facing = (F.facing or 0) + (arg1 or 0) * 0.6
@@ -502,8 +547,7 @@ function BananaLootRaider:ApplyBossModel()
     end
     if F.hasModel then
         if F.modelSource == "unit" then
-            pcall(function() F.model:SetCamera(0) end)     -- Portrait-Kamera des Spiels, echte Texturen
-            ApplyModelLight(nil)
+            ApplyModelLight(nil)                           -- anvisiertes Ziel: echte Texturen
         else
             ApplyModelLight(entry and entry.tint)          -- Pfad-Modell: ohne Texturen, eingefaerbt
         end
@@ -563,7 +607,7 @@ function BananaLootRaider:RefreshBossFrame()
     local h = F.body:GetHeight()
     if not h or h < 14 then h = Estimate(body) end
     local need = 84 + h + 54
-    if F.hasModel and need < 84 + 196 + 30 + 54 then need = 84 + 196 + 30 + 54 end
+    if F.hasModel and need < 84 + 196 + 72 + 54 then need = 84 + 196 + 72 + 54 end
     F:SetHeight(need)
     F.hideCheck:SetChecked(DB().bossHidden[F.key] and true or false)
 end
@@ -677,7 +721,7 @@ end)
 function BananaLootRaider:PrintModelTune()
     local any = false
     for k, t in pairs(DB().modelTune) do
-        DEFAULT_CHAT_FRAME:AddMessage(string.format('["%s"] = { scale = %.2f, facing = %.2f, z = %.2f }', k, t.scale or 1, t.facing or 0, t.z or 0))
+        DEFAULT_CHAT_FRAME:AddMessage(string.format('["%s"] = { cam = %d, scale = %.2f, d = %.1f, h = %.1f, z = %.1f, facing = %.2f }', k, t.cam or 1, t.scale or 0, t.d or 0, t.h or 0, t.z or 0, t.facing or 0))
         any = true
     end
     if not any then DEFAULT_CHAT_FRAME:AddMessage("|cff33ff99BananaLoot Raider|r: keine gespeicherten Modell-Einstellungen") end
