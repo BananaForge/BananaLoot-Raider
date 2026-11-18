@@ -14,7 +14,6 @@ local function DB()
     local d = BananaLootRaider_DB
     if not d.bossTexts then d.bossTexts = {} end
     if not d.bossHidden then d.bossHidden = {} end
-    if not d.modelTune then d.modelTune = {} end
     return d
 end
 
@@ -30,16 +29,6 @@ function BananaLootRaider:SetBossHelpEnabled(v)
     BananaLootRaider.EnsureDB()
     BananaLootRaider_DB.settings.bossHelp = v and true or false
 end
-function BananaLootRaider:GetBossModelEnabled()
-    BananaLootRaider.EnsureDB()
-    if BananaLootRaider_DB.settings.bossModel == nil then return true end
-    return BananaLootRaider_DB.settings.bossModel
-end
-function BananaLootRaider:SetBossModelEnabled(v)
-    BananaLootRaider.EnsureDB()
-    BananaLootRaider_DB.settings.bossModel = v and true or false
-end
-
 function BananaLootRaider:GetBossHelpRole()
     BananaLootRaider.EnsureDB()
     return BananaLootRaider_DB.settings.bossHelpRole or "auto"
@@ -400,220 +389,81 @@ end)
 F.hideLabel = F:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 F.hideLabel:SetPoint("LEFT", F.hideCheck, "RIGHT", 2, 1)
 
--- 3D-Modell des Bosses (links neben dem Text): im Kampf das anvisierte Ziel, sonst ein Modell aus der Liste
-F.modelHolder = CreateFrame("Frame", "BananaLootRaiderBossModelHolder", F)
-F.modelHolder:SetWidth(144)
-F.modelHolder:SetHeight(196)
-F.modelHolder:SetPoint("TOPLEFT", F, "TOPLEFT", 20, -84)
-F.modelHolder:SetBackdrop({
+-- Boss-Bild (links neben dem Text): das Symbol eines besonderen Drops des Bosses. Es kommt aus dem Spiel selbst
+-- (Item-Symbole), es werden keine Bilddateien mitgeliefert.
+F.avatarHolder = CreateFrame("Frame", "BananaLootRaiderBossAvatarHolder", F)
+F.avatarHolder:SetWidth(112)
+F.avatarHolder:SetHeight(112)
+F.avatarHolder:SetPoint("TOPLEFT", F, "TOPLEFT", 22, -84)
+F.avatarHolder:SetBackdrop({
     bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
     edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
     tile = true, tileSize = 16, edgeSize = 12,
     insets = { left = 3, right = 3, top = 3, bottom = 3 },
 })
-F.modelHolder:SetBackdropColor(0, 0, 0, 0.7)
-F.modelHolder:Hide()
-F.model = CreateFrame("PlayerModel", "BananaLootRaiderBossModel", F.modelHolder)
-F.model:SetPoint("TOPLEFT", F.modelHolder, "TOPLEFT", 4, -4)
-F.model:SetPoint("BOTTOMRIGHT", F.modelHolder, "BOTTOMRIGHT", -4, 4)
-F.modelBtns = {}
--- Kalibrierung: Knoepfe in zwei Reihen unter dem Modell; jede Aenderung wird pro Boss gespeichert (/blr modeltune).
-local function ModelBtn(text, col, row, tip, fn)
-    local b = CreateFrame("Button", nil, F.modelHolder, "UIPanelButtonTemplate")
-    b:SetWidth(22)
-    b:SetHeight(20)
-    b:SetPoint("TOPLEFT", F.modelHolder, "BOTTOMLEFT", col * 24, -2 - row * 22)
-    b:SetText(text)
-    b:SetScript("OnClick", function() BananaLootRaider:PlayClickSound(); fn() end)
-    b:SetScript("OnEnter", function()
-        GameTooltip:SetOwner(this, "ANCHOR_TOP")
-        GameTooltip:SetText(tip, 1, 1, 1, 1, 1)
-        GameTooltip:Show()
-    end)
-    b:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    table.insert(F.modelBtns, b)
-    return b
-end
-local function Tune()
-    if not F.key then return nil end
-    local d = DB()
-    if not d.modelTune[F.key] then d.modelTune[F.key] = {} end
-    return d.modelTune[F.key]
+F.avatarHolder:SetBackdropColor(0, 0, 0, 0.7)
+F.avatarHolder:Hide()
+F.avatar = F.avatarHolder:CreateTexture(nil, "ARTWORK")
+F.avatar:SetWidth(92)
+F.avatar:SetHeight(92)
+F.avatar:SetPoint("CENTER", F.avatarHolder, "CENTER", 0, 0)
+F.avatar:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+
+local function NormName(x)
+    return string.lower(string.gsub(x or "", "[^%a%d]", ""))
 end
 
--- Kamera-Modus: 1 = Portrait-Kamera des Modells (immer sichtbar), 2 = Standardkamera (Groesse/Position per Hand)
-local function CamMode()
-    local t = F.key and DB().modelTune[F.key] or nil
-    if F.modelSource == "unit" then return 1 end
-    return (t and t.cam) or 1
-end
-local function BaseScale()
-    local e = F.key and BananaLootRaider_BossModels and BananaLootRaider_BossModels[F.key] or nil
-    if F.modelSource ~= "unit" and CamMode() == 2 and e and e.scale then return e.scale end
-    return 1
-end
-local function CurrentScale()
-    local t = F.key and DB().modelTune[F.key] or nil
-    return (t and t.scale) or BaseScale()
+-- Passenden Drop-Eintrag des Bosses in der Beute-Tabelle finden und das beste, moeglichst bosstypische Item waehlen
+function BananaLootRaider:FindBossIcon(raid, boss)
+    local loot = BananaLootRaider_RaidLoot and BananaLootRaider_RaidLoot[raid.key]
+    if not loot then return nil end
+    local count = {}
+    for i = 1, table.getn(loot) do
+        local ids = loot[i][2]
+        for k = 1, table.getn(ids) do count[ids[k]] = (count[ids[k]] or 0) + 1 end
+    end
+    local names = { NormName(boss.label) }
+    for u = 1, table.getn(boss.units or {}) do table.insert(names, NormName(boss.units[u])) end
+    local entry
+    for i = 1, table.getn(loot) do
+        local ln = NormName(loot[i][1])
+        for n = 1, table.getn(names) do
+            local nn = names[n]
+            if nn ~= "" and ln ~= "" and (ln == nn or string.find(ln, nn, 1, true) or string.find(nn, ln, 1, true)) then entry = loot[i] break end
+        end
+        if entry then break end
+    end
+    if not entry then return nil end
+    local bestScore, bestIcon = -1, nil
+    for k = 1, table.getn(entry[2]) do
+        local id = entry[2][k]
+        local info = self:GetStaticItemInfo(id)
+        if info and info.icon and info.icon ~= "" then
+            local score = (info.quality or 0) * 10 + ((count[id] == 1) and 6 or 0)
+            if score > bestScore then bestScore = score; bestIcon = "Interface\\Icons\\" .. info.icon end
+        end
+    end
+    return bestIcon
 end
 
--- Eingabefelder: Werte lassen sich genau eintippen (Enter uebernimmt). S=Groesse, T=Tiefe, H=links/rechts, V=hoch/runter,
--- D=Drehung, C=Kamera-Abstand (nur Portrait-Kamera, falls vom Client unterstuetzt)
-F.modelFields = {}
-local FIELD_DEFS = {
-    { "S", "scale", 0, 3, "Groesse (Zoom)" }, { "T", "d", 1, 3, "Tiefe (negativ = weiter weg, nur Standardkamera K2)" },
-    { "H", "h", 2, 3, "Links/Rechts" }, { "V", "z", 0, 4, "Hoch/Runter" },
-    { "D", "facing", 1, 4, "Drehung (Bogenmass)" }, { "C", "c", 2, 4, "Kamera-Abstand (Portrait-Kamera K1)" },
+-- Feste Symbole fuer Bosse ohne Beutedaten (Weltdrachen)
+local FIXED_ICONS = {
+    ["WB:azuregos"] = "INV_Misc_Head_Dragon_Blue", ["WB:emeriss"] = "INV_Misc_Head_Dragon_Green",
+    ["WB:lethon"] = "INV_Misc_Head_Dragon_Green", ["WB:taerar"] = "INV_Misc_Head_Dragon_Green",
+    ["WB:ysondre"] = "INV_Misc_Head_Dragon_Green",
 }
-local function UpdateReadout()
-    local t = F.key and DB().modelTune[F.key] or nil
-    for i = 1, table.getn(F.modelFields) do
-        local f = F.modelFields[i]
-        local v
-        if f.field == "scale" then v = CurrentScale()
-        elseif f.field == "c" then v = (t and t.c) or 1
-        else v = (t and t[f.field]) or 0 end
-        if not f.box:HasFocus() then f.box:SetText(string.format("%.2f", v)) end
-    end
-    F.modelInfo:SetText("K" .. CamMode())
-end
 
-local function ApplyModelTune()
-    local tune = F.key and DB().modelTune[F.key] or nil
-    local facing = (tune and tune.facing) or 0
-    if CamMode() == 1 then pcall(function() F.model:SetCamera(0) end) end
-    pcall(function() F.model:SetModelScale(CurrentScale()) end)
-    pcall(function() F.model:SetFacing(facing) end)
-    pcall(function() F.model:SetPosition((tune and tune.d) or 0, (tune and tune.h) or 0, (tune and tune.z) or 0) end)
-    pcall(function() F.model:SetCamDistanceScale((tune and tune.c) or 1) end)
-    F.facing = facing
-    UpdateReadout()
-end
-
--- Modell-Licht: ueber einen Dateipfad geladene Modelle haben keine Texturen (weiss); ein farbiges Umgebungslicht
--- faerbt sie thematisch ein. nil = neutrales Licht (anvisiertes Ziel: echte Texturen).
-local function ApplyModelLight(tint)
-    local r, g, b = 1, 1, 1
-    if tint then r, g, b = tint[1], tint[2], tint[3] end
-    pcall(function() F.model:SetLight(1, 0, -1, -1, -1, 0.75, r, g, b, 0.9, r, g, b) end)
-end
-
-local function Bump(field, delta, mul)
-    local t = Tune()
-    if not t then return end
-    if mul then t[field] = CurrentScale() * delta else t[field] = (t[field] or 0) + delta end
-    ApplyModelTune()
-end
-ModelBtn("S-", 0, 0, "Kleiner", function() Bump("scale", 0.8, true) end)
-ModelBtn("S+", 1, 0, "Groesser", function() Bump("scale", 1.25, true) end)
-ModelBtn("T-", 2, 0, "Weiter weg (Tiefe)", function() Bump("d", -1) end)
-ModelBtn("T+", 3, 0, "Naeher (Tiefe)", function() Bump("d", 1) end)
-ModelBtn("<", 4, 0, "Nach links drehen", function() Bump("facing", -0.4) end)
-ModelBtn(">", 5, 0, "Nach rechts drehen", function() Bump("facing", 0.4) end)
-ModelBtn("^", 0, 1, "Hoeher", function() Bump("z", -0.4) end)
-ModelBtn("v", 1, 1, "Tiefer", function() Bump("z", 0.4) end)
-ModelBtn("L", 2, 1, "Nach links schieben", function() Bump("h", 0.4) end)
-ModelBtn("R", 3, 1, "Nach rechts schieben", function() Bump("h", -0.4) end)
-F.camBtn = ModelBtn("K", 4, 1, "Kamera-Modus wechseln (K1 = Portrait-Kamera, K2 = Standardkamera)", function()
-    local t = Tune()
-    if not t then return end
-    t.cam = (CamMode() == 1) and 2 or 1
-    t.scale = nil
-    BananaLootRaider:ApplyBossModel()
-end)
-F.rotating = false
-F.rotBtn = ModelBtn("~", 5, 1, "Dauerdrehung an/aus", function() F.rotating = not F.rotating end)
-ModelBtn("0", 0, 2, "Einstellungen dieses Bosses zuruecksetzen", function()
-    if F.key then DB().modelTune[F.key] = nil end
-    BananaLootRaider:ApplyBossModel()
-end)
-F.modelInfo = F.modelHolder:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-F.modelInfo:SetPoint("LEFT", F.modelBtns[table.getn(F.modelBtns)], "RIGHT", 8, 0)
-for i = 1, table.getn(FIELD_DEFS) do
-    local d = FIELD_DEFS[i]
-    local lbl = F.modelHolder:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    lbl:SetPoint("TOPLEFT", F.modelHolder, "BOTTOMLEFT", d[3] * 48, -2 - d[4] * 22 - 4)
-    lbl:SetText(d[1])
-    local box = CreateFrame("EditBox", "BananaLootRaiderModelField" .. d[1], F.modelHolder, "InputBoxTemplate")
-    box:SetWidth(34)
-    box:SetHeight(18)
-    box:SetPoint("LEFT", lbl, "RIGHT", 6, 0)
-    box:SetAutoFocus(false)
-    box:SetMaxLetters(7)
-    local field = d[2]
-    box:SetScript("OnEnterPressed", function()
-        local v = tonumber(this:GetText())
-        local t = Tune()
-        if v and t then
-            if field == "scale" and v <= 0 then v = 0.01 end
-            t[field] = v
-            this:ClearFocus()
-            ApplyModelTune()
-        else
-            this:ClearFocus()
-            UpdateReadout()
-        end
-    end)
-    box:SetScript("OnEscapePressed", function() this:ClearFocus(); UpdateReadout() end)
-    box:SetScript("OnEnter", function()
-        GameTooltip:SetOwner(this, "ANCHOR_TOP")
-        GameTooltip:SetText(d[5], 1, 1, 1, 1, 1)
-        GameTooltip:Show()
-    end)
-    box:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    table.insert(F.modelFields, { box = box, field = field })
-end
--- Animation: der Client spielt die Modell-Animation nicht von selbst ab - Zeit von Hand weiterschalten (Animation 0 = Stehen)
-F.animTime = 0
-F:SetScript("OnUpdate", function()
-    if not F.modelHolder:IsShown() then return end
-    local dt = arg1 or 0
-    if F.rotating then
-        F.facing = (F.facing or 0) + dt * 0.6
-        pcall(function() F.model:SetFacing(F.facing) end)
-    end
-    F.animTime = (F.animTime or 0) + dt * 1000
-    if F.animTime > 100000 then F.animTime = 0 end
-    pcall(function() F.model:SetSequenceTime(0, F.animTime) end)
-end)
-
--- Passt der Name des Ziels zu einem der Gegner-Namen dieses Bosses?
-local function TargetIsBoss(boss)
-    if not UnitExists("target") or UnitIsPlayer("target") then return false end
-    local n = UnitName("target")
-    for u = 1, table.getn(boss.units or {}) do
-        if boss.units[u] == n then return true end
-    end
-    return false
-end
-
--- Modell setzen. Rueckgabe: true, wenn ein Modell gezeigt wird.
-function BananaLootRaider:ApplyBossModel()
-    F.modelHolder:Hide()
-    F.hasModel = false
-    if not F.bossObj or not self:GetBossModelEnabled() then return false end
-    local entry = BananaLootRaider_BossModels and BananaLootRaider_BossModels[F.key] or nil
-    if TargetIsBoss(F.bossObj) then
-        F.hasModel = true
-        F.modelSource = "unit"
-        pcall(function() F.model:SetUnit("target") end)
-        pcall(function() F.model:SetSequence(0) end)
-    elseif entry then
-        F.hasModel = true
-        F.modelSource = "path"
-        pcall(function() F.model:SetModel(entry.path) end)
-        pcall(function() F.model:SetSequence(0) end)       -- Animation 0 = Stehen (Zeit laeuft in OnUpdate weiter)
-    end
-    if F.hasModel then
-        if F.modelSource == "unit" then
-            ApplyModelLight(nil)                           -- anvisiertes Ziel: echte Texturen
-        else
-            ApplyModelLight(entry and entry.tint)          -- Pfad-Modell: ohne Texturen, eingefaerbt
-        end
-        ApplyModelTune()
-        F.modelHolder:Show()
-    end
-    return F.hasModel
+-- Bild setzen. Rueckgabe: true, wenn eines gezeigt wird (sonst Standard-Symbol "Totenkopf").
+function BananaLootRaider:ApplyBossAvatar()
+    F.avatarHolder:Hide()
+    F.hasAvatar = false
+    if not F.bossObj then return false end
+    local fixed = FIXED_ICONS[F.key]
+    local icon = (fixed and ("Interface\\Icons\\" .. fixed)) or self:FindBossIcon(F.raidObj, F.bossObj) or "Interface\\Icons\\INV_Misc_Bone_HumanSkull_01"
+    F.avatar:SetTexture(icon)
+    F.hasAvatar = true
+    F.avatarHolder:Show()
+    return true
 end
 
 local function Estimate(text)
@@ -646,17 +496,16 @@ function BananaLootRaider:RefreshBossFrame()
         end
     end
     body = string.gsub(body, "%s+$", "")
-    -- Modell links (nur beim ersten Aufbau fuer diesen Boss neu setzen), Text rechts daneben
-    if F.modelKey ~= F.key or F.modelDirty then
-        self:ApplyBossModel()
-        F.modelKey = F.key
-        F.modelDirty = false
+    -- Bild links, Text rechts daneben
+    if F.avatarKey ~= F.key then
+        self:ApplyBossAvatar()
+        F.avatarKey = F.key
     end
     F.body:ClearAllPoints()
-    if F.hasModel then
-        F:SetWidth(540)
-        F.body:SetPoint("TOPLEFT", F, "TOPLEFT", 176, -84)
-        F.body:SetWidth(342)
+    if F.hasAvatar then
+        F:SetWidth(500)
+        F.body:SetPoint("TOPLEFT", F, "TOPLEFT", 148, -84)
+        F.body:SetWidth(330)
     else
         F:SetWidth(380)
         F.body:SetPoint("TOPLEFT", F, "TOPLEFT", 22, -84)
@@ -666,7 +515,7 @@ function BananaLootRaider:RefreshBossFrame()
     local h = F.body:GetHeight()
     if not h or h < 14 then h = Estimate(body) end
     local need = 84 + h + 54
-    if F.hasModel and need < 84 + 196 + 120 + 54 then need = 84 + 196 + 120 + 54 end
+    if F.hasAvatar and need < 84 + 112 + 54 then need = 84 + 112 + 54 end
     F:SetHeight(need)
     F.hideCheck:SetChecked(DB().bossHidden[F.key] and true or false)
 end
@@ -682,7 +531,6 @@ function BananaLootRaider:ShowBossHelp(raid, boss, field, force)
     end
     local same = F:IsShown() and F.key == key
     F.raidObj, F.bossObj, F.key = raid, boss, key
-    if not same then F.modelDirty = true end
     if not same then F.onlyMine = false; F.showSecond = false end
     if field == "m2" then F.showSecond = true end
     self.bossShown[key] = GetTime()
@@ -776,16 +624,6 @@ ev:SetScript("OnUpdate", function()
 end)
 
 -- ------------------------------------------------------------
--- /blr modeltune: gespeicherte Zoom-/Drehwerte ausgeben (zum Weitergeben)
-function BananaLootRaider:PrintModelTune()
-    local any = false
-    for k, t in pairs(DB().modelTune) do
-        DEFAULT_CHAT_FRAME:AddMessage(string.format('["%s"] = { cam = %d, scale = %.2f, d = %.2f, h = %.2f, z = %.2f, facing = %.2f, c = %.2f }', k, t.cam or 1, t.scale or 0, t.d or 0, t.h or 0, t.z or 0, t.facing or 0, t.c or 1))
-        any = true
-    end
-    if not any then DEFAULT_CHAT_FRAME:AddMessage("|cff33ff99BananaLoot Raider|r: keine gespeicherten Modell-Einstellungen") end
-end
-
 -- /blr boss [Name|reset]  -- Vorschau bzw. ausgeblendete Bosse zuruecksetzen
 -- ------------------------------------------------------------
 function BananaLootRaider:BossSlash(arg)
@@ -815,7 +653,7 @@ end
 -- ------------------------------------------------------------
 local optFrame = getglobal("BananaLootRaiderOptionsFrame")
 if optFrame then
-    optFrame:SetHeight(850)
+    optFrame:SetHeight(800)
     local O = {}
     O.check = CreateFrame("CheckButton", "BananaLootRaiderBossHelpCheck", optFrame, "UICheckButtonTemplate")
     O.check:SetPoint("TOPLEFT", optFrame, "TOPLEFT", 18, -650)
@@ -849,22 +687,7 @@ if optFrame then
         O.btns[i] = b
         prev = b
     end
-    O.modelCheck = CreateFrame("CheckButton", "BananaLootRaiderBossModelCheck", optFrame, "UICheckButtonTemplate")
-    O.modelCheck:SetPoint("TOPLEFT", optFrame, "TOPLEFT", 18, -786)
-    O.modelCheck:SetScript("OnClick", function()
-        BananaLootRaider:PlayClickSound()
-        BananaLootRaider:SetBossModelEnabled(O.modelCheck:GetChecked() and true or false)
-    end)
-    O.modelLabel = optFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    O.modelLabel:SetPoint("LEFT", O.modelCheck, "RIGHT", 2, 1)
-    O.modelHint = optFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    O.modelHint:SetPoint("TOPLEFT", optFrame, "TOPLEFT", 20, -814)
-    O.modelHint:SetWidth(420)
-    O.modelHint:SetJustifyH("LEFT")
     function BananaLootRaider_BossOptRefresh()
-        O.modelCheck:SetChecked(BananaLootRaider:GetBossModelEnabled())
-        O.modelLabel:SetText(BananaLootRaider:L("BH_MODEL_OPT"))
-        O.modelHint:SetText(BananaLootRaider:L("BH_MODEL_HINT"))
         O.check:SetChecked(BananaLootRaider:GetBossHelpEnabled())
         O.label:SetText(BananaLootRaider:L("BH_OPT_ENABLE"))
         O.hint:SetText(BananaLootRaider:L("BH_OPT_HINT"))

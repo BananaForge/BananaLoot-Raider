@@ -167,8 +167,7 @@ function BananaLootRaider_BossTestRefresh()
                 n = n + 1
                 local br = GetRow(n)
                 br.raid, br.boss, br.isBoss = raid, raid.bosses[b], true
-                local hasModel = BananaLootRaider_BossModels and BananaLootRaider_BossModels[raid.key .. ":" .. raid.bosses[b].key]
-                br.text:SetText("      " .. raid.bosses[b].label .. (hasModel and "  |cff33ff99[3D]|r" or ""))
+                br.text:SetText("      " .. raid.bosses[b].label)
                 br:Show()
             end
         end

@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.16
+
+- Aenderung: Das 3D-Modell im Boss-Fenster ist entfernt (Kalibrierung, Animation, Modell-Liste, Option). An seiner Stelle steht ein ruhiges **Bild**: das Symbol eines besonderen Drops des Bosses (aus der Beute-Tabelle, bevorzugt ein bosstypisches Item hoher Qualitaet); Bosse ohne Beutedaten zeigen ein Totenkopf-Symbol. Die Bilder kommen aus dem Spiel selbst - es werden keine Bilddateien mitgeliefert.
+
 ## v1.15
 
 - Neu: **Werte von Hand eintippen.** Unter dem Modell stehen jetzt Eingabefelder fuer S (Groesse), T (Tiefe), H (links/rechts), V (hoch/runter), D (Drehung) und C (Kamera-Abstand); Wert eintippen, Enter druecken. Die Knoepfe aendern die Werte weiter schrittweise; alles wird pro Boss gespeichert (`/blr modeltune`).

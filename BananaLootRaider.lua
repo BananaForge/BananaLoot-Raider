@@ -11,7 +11,7 @@
 -- Vergabe und keine Loot-Fenster-Logik.
 
 BananaLootRaider = {}
-BananaLootRaider.VERSION = "1.15"
+BananaLootRaider.VERSION = "1.16"
 
 -- Ordnername des Addons im Spiel (der Download von GitHub heisst "BananaLoot-Raider", die Anleitung "BananaLootRaider"):
 -- aus dem Dateipfad des Aufrufstapels gelesen, damit Icons/Logo in beiden Faellen gefunden werden.
@@ -132,8 +132,6 @@ local LOCALE = {
         BH_R_HEAL = "Heiler",
         BH_SHOW_ALL = "Alles anzeigen",
         BH_SHOW_MINE = "Nur für mich",
-        BH_MODEL_OPT = "3D-Modell des Bosses im Boss-Fenster zeigen",
-        BH_MODEL_HINT = "Zeigt das animierte Spielmodell des Bosses (im Kampf das anvisierte Ziel). Mit +/- zoomen, mit </> drehen, ~ = Dauerdrehung.",
         BH_FOR_YOU = "FÜR DICH",
         BH_FOR_ALL = "Für alle",
         BH_FOR_OTHERS = "Für andere Rollen/Klassen",
@@ -301,8 +299,6 @@ local LOCALE = {
         BH_R_HEAL = "Healer",
         BH_SHOW_ALL = "Show all",
         BH_SHOW_MINE = "Only for me",
-        BH_MODEL_OPT = "Show the boss 3D model in the boss window",
-        BH_MODEL_HINT = "Shows the animated game model of the boss (in combat: your current target). Zoom with +/-, rotate with </>, ~ = keep rotating.",
         BH_FOR_YOU = "FOR YOU",
         BH_FOR_ALL = "For everyone",
         BH_FOR_OTHERS = "For other roles/classes",
@@ -957,9 +953,6 @@ SlashCmdList["BANANALOOTRAIDER"] = function(msg)
     elseif cmd == "prefetch off" or cmd == "prefetch on" then
         BananaLootRaider:SetPrefetchEnabled(cmd == "prefetch on")
         DEFAULT_CHAT_FRAME:AddMessage("|cff33ff99BananaLoot Raider|r: Prefetch " .. (cmd == "prefetch on" and "on" or "off"))
-
-    elseif cmd == "modeltune" then
-        if BananaLootRaider.PrintModelTune then BananaLootRaider:PrintModelTune() end
 
     elseif cmd == "bosstest" then
         if BananaLootRaider.OpenBossTest then BananaLootRaider:OpenBossTest() end
