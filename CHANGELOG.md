@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.15
+
+- Neu: **Werte von Hand eintippen.** Unter dem Modell stehen jetzt Eingabefelder fuer S (Groesse), T (Tiefe), H (links/rechts), V (hoch/runter), D (Drehung) und C (Kamera-Abstand); Wert eintippen, Enter druecken. Die Knoepfe aendern die Werte weiter schrittweise; alles wird pro Boss gespeichert (`/blr modeltune`).
+- Neu: **Animation.** Der Client spielt Modell-Animationen nicht von selbst ab; das Fenster schaltet jetzt die Zeit der Stehen-Animation selbst weiter, damit sich das Modell bewegt.
+
 ## v1.14
 
 - Fix: Das Raider-Symbol (Minimap-Button, Fenster-Titel, Optionen-Logo) fehlte, wenn der Addon-Ordner "BananaLoot-Raider" heisst (so heisst der Download von GitHub) statt "BananaLootRaider": der Bildpfad war fest verdrahtet. Der Ordnername wird jetzt automatisch erkannt. Ausserdem lief die Start-Initialisierung (ADDON_LOADED) nur beim Ordnernamen "BananaLootRaider" - jetzt auch bei "BananaLoot-Raider".

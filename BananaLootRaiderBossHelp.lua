@@ -457,10 +457,25 @@ local function CurrentScale()
     return (t and t.scale) or BaseScale()
 end
 
+-- Eingabefelder: Werte lassen sich genau eintippen (Enter uebernimmt). S=Groesse, T=Tiefe, H=links/rechts, V=hoch/runter,
+-- D=Drehung, C=Kamera-Abstand (nur Portrait-Kamera, falls vom Client unterstuetzt)
+F.modelFields = {}
+local FIELD_DEFS = {
+    { "S", "scale", 0, 3, "Groesse (Zoom)" }, { "T", "d", 1, 3, "Tiefe (negativ = weiter weg, nur Standardkamera K2)" },
+    { "H", "h", 2, 3, "Links/Rechts" }, { "V", "z", 0, 4, "Hoch/Runter" },
+    { "D", "facing", 1, 4, "Drehung (Bogenmass)" }, { "C", "c", 2, 4, "Kamera-Abstand (Portrait-Kamera K1)" },
+}
 local function UpdateReadout()
     local t = F.key and DB().modelTune[F.key] or nil
-    F.modelInfo:SetText(string.format("K%d S%.2f T%.1f H%.1f V%.1f", CamMode(), CurrentScale(),
-        (t and t.d) or 0, (t and t.h) or 0, (t and t.z) or 0))
+    for i = 1, table.getn(F.modelFields) do
+        local f = F.modelFields[i]
+        local v
+        if f.field == "scale" then v = CurrentScale()
+        elseif f.field == "c" then v = (t and t.c) or 1
+        else v = (t and t[f.field]) or 0 end
+        if not f.box:HasFocus() then f.box:SetText(string.format("%.2f", v)) end
+    end
+    F.modelInfo:SetText("K" .. CamMode())
 end
 
 local function ApplyModelTune()
@@ -470,6 +485,7 @@ local function ApplyModelTune()
     pcall(function() F.model:SetModelScale(CurrentScale()) end)
     pcall(function() F.model:SetFacing(facing) end)
     pcall(function() F.model:SetPosition((tune and tune.d) or 0, (tune and tune.h) or 0, (tune and tune.z) or 0) end)
+    pcall(function() F.model:SetCamDistanceScale((tune and tune.c) or 1) end)
     F.facing = facing
     UpdateReadout()
 end
@@ -511,13 +527,54 @@ ModelBtn("0", 0, 2, "Einstellungen dieses Bosses zuruecksetzen", function()
     if F.key then DB().modelTune[F.key] = nil end
     BananaLootRaider:ApplyBossModel()
 end)
-F.modelInfo = F.modelHolder:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-F.modelInfo:SetPoint("LEFT", F.modelBtns[table.getn(F.modelBtns)], "RIGHT", 6, 0)
+F.modelInfo = F.modelHolder:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+F.modelInfo:SetPoint("LEFT", F.modelBtns[table.getn(F.modelBtns)], "RIGHT", 8, 0)
+for i = 1, table.getn(FIELD_DEFS) do
+    local d = FIELD_DEFS[i]
+    local lbl = F.modelHolder:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    lbl:SetPoint("TOPLEFT", F.modelHolder, "BOTTOMLEFT", d[3] * 48, -2 - d[4] * 22 - 4)
+    lbl:SetText(d[1])
+    local box = CreateFrame("EditBox", "BananaLootRaiderModelField" .. d[1], F.modelHolder, "InputBoxTemplate")
+    box:SetWidth(34)
+    box:SetHeight(18)
+    box:SetPoint("LEFT", lbl, "RIGHT", 6, 0)
+    box:SetAutoFocus(false)
+    box:SetMaxLetters(7)
+    local field = d[2]
+    box:SetScript("OnEnterPressed", function()
+        local v = tonumber(this:GetText())
+        local t = Tune()
+        if v and t then
+            if field == "scale" and v <= 0 then v = 0.01 end
+            t[field] = v
+            this:ClearFocus()
+            ApplyModelTune()
+        else
+            this:ClearFocus()
+            UpdateReadout()
+        end
+    end)
+    box:SetScript("OnEscapePressed", function() this:ClearFocus(); UpdateReadout() end)
+    box:SetScript("OnEnter", function()
+        GameTooltip:SetOwner(this, "ANCHOR_TOP")
+        GameTooltip:SetText(d[5], 1, 1, 1, 1, 1)
+        GameTooltip:Show()
+    end)
+    box:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    table.insert(F.modelFields, { box = box, field = field })
+end
+-- Animation: der Client spielt die Modell-Animation nicht von selbst ab - Zeit von Hand weiterschalten (Animation 0 = Stehen)
+F.animTime = 0
 F:SetScript("OnUpdate", function()
-    if F.rotating and F.modelHolder:IsShown() then
-        F.facing = (F.facing or 0) + (arg1 or 0) * 0.6
+    if not F.modelHolder:IsShown() then return end
+    local dt = arg1 or 0
+    if F.rotating then
+        F.facing = (F.facing or 0) + dt * 0.6
         pcall(function() F.model:SetFacing(F.facing) end)
     end
+    F.animTime = (F.animTime or 0) + dt * 1000
+    if F.animTime > 100000 then F.animTime = 0 end
+    pcall(function() F.model:SetSequenceTime(0, F.animTime) end)
 end)
 
 -- Passt der Name des Ziels zu einem der Gegner-Namen dieses Bosses?
@@ -540,10 +597,12 @@ function BananaLootRaider:ApplyBossModel()
         F.hasModel = true
         F.modelSource = "unit"
         pcall(function() F.model:SetUnit("target") end)
+        pcall(function() F.model:SetSequence(0) end)
     elseif entry then
         F.hasModel = true
         F.modelSource = "path"
         pcall(function() F.model:SetModel(entry.path) end)
+        pcall(function() F.model:SetSequence(0) end)       -- Animation 0 = Stehen (Zeit laeuft in OnUpdate weiter)
     end
     if F.hasModel then
         if F.modelSource == "unit" then
@@ -607,7 +666,7 @@ function BananaLootRaider:RefreshBossFrame()
     local h = F.body:GetHeight()
     if not h or h < 14 then h = Estimate(body) end
     local need = 84 + h + 54
-    if F.hasModel and need < 84 + 196 + 72 + 54 then need = 84 + 196 + 72 + 54 end
+    if F.hasModel and need < 84 + 196 + 120 + 54 then need = 84 + 196 + 120 + 54 end
     F:SetHeight(need)
     F.hideCheck:SetChecked(DB().bossHidden[F.key] and true or false)
 end
@@ -721,7 +780,7 @@ end)
 function BananaLootRaider:PrintModelTune()
     local any = false
     for k, t in pairs(DB().modelTune) do
-        DEFAULT_CHAT_FRAME:AddMessage(string.format('["%s"] = { cam = %d, scale = %.2f, d = %.1f, h = %.1f, z = %.1f, facing = %.2f }', k, t.cam or 1, t.scale or 0, t.d or 0, t.h or 0, t.z or 0, t.facing or 0))
+        DEFAULT_CHAT_FRAME:AddMessage(string.format('["%s"] = { cam = %d, scale = %.2f, d = %.2f, h = %.2f, z = %.2f, facing = %.2f, c = %.2f }', k, t.cam or 1, t.scale or 0, t.d or 0, t.h or 0, t.z or 0, t.facing or 0, t.c or 1))
         any = true
     end
     if not any then DEFAULT_CHAT_FRAME:AddMessage("|cff33ff99BananaLoot Raider|r: keine gespeicherten Modell-Einstellungen") end

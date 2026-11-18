@@ -11,7 +11,7 @@
 -- Vergabe und keine Loot-Fenster-Logik.
 
 BananaLootRaider = {}
-BananaLootRaider.VERSION = "1.14"
+BananaLootRaider.VERSION = "1.15"
 
 -- Ordnername des Addons im Spiel (der Download von GitHub heisst "BananaLoot-Raider", die Anleitung "BananaLootRaider"):
 -- aus dem Dateipfad des Aufrufstapels gelesen, damit Icons/Logo in beiden Faellen gefunden werden.
