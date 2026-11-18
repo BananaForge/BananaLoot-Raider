@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.9
+
+- Neu: **Rolle und Klasse hervorgehoben.** Das Boss-Info-Fenster prueft zuerst, wer du bist (Klasse, Talentbaum, Rolle Tank/DD/Heiler), teilt jeden Boss-Text satzweise ein und zeigt oben **"FUER DICH"** (gelb hervorgehoben, mit ">") - alles, was deine Rolle oder deine Klasse betrifft (z.B. Taunt/Tankwechsel fuer Tanks, Tranquilizing Shot fuer Jaeger, Decursen fuer Druide/Magier, Fear Ward fuer Priester, Tremor Totem fuer Schamanen). Darunter "Fuer alle", ganz unten gedaempft, was nur andere Rollen/Klassen betrifft. Knopf "Nur fuer mich" blendet den letzten Teil aus. Die Kopfzeile nennt Rolle, Klasse und Talentbaum.
+- Neu: **Boss-Test** (nur im BananaLoot-Testlauf, ueber BananaLoot > Optionen > Verwaltung "Raider-Boss-Test" oder `/blr bosstest`): aufklappbare Uebersicht aller Raids mit ihren Bossen. Ein Klick auf einen Boss zeigt das Info-Fenster wie fuer einen echten Raider. Rolle und Klasse lassen sich vortaeuschen (Tank/DD/Heiler, alle neun Klassen), um jede Ansicht zu pruefen.
+
 ## v1.8
 
 - Aenderung: Boss-Texte ueberarbeitet (nach Recherche): Onyxia, Ebonroc, Baron Geddon, Lord Kazzak, Rend & Gyth, Bloodlord Mandokir, Ragnaros korrigiert; der Fuellsatz "Keine Fluche zu cleansen" ist aus allen Texten entfernt.

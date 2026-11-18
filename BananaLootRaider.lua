@@ -11,7 +11,7 @@
 -- Vergabe und keine Loot-Fenster-Logik.
 
 BananaLootRaider = {}
-BananaLootRaider.VERSION = "1.8"
+BananaLootRaider.VERSION = "1.9"
 
 -- ============================================================
 -- 1) DATENBANK / SAVEDVARIABLES
@@ -112,8 +112,17 @@ local LOCALE = {
         BH_R_TANK = "Tank",
         BH_R_DD = "DD",
         BH_R_HEAL = "Heiler",
-        BH_SHOW_ALL = "Alle Rollen",
-        BH_SHOW_MINE = "Nur meine Rolle",
+        BH_SHOW_ALL = "Alles anzeigen",
+        BH_SHOW_MINE = "Nur für mich",
+        BH_FOR_YOU = "FÜR DICH",
+        BH_FOR_ALL = "Für alle",
+        BH_FOR_OTHERS = "Für andere Rollen/Klassen",
+        BHT_TITLE = "Boss-Test (Raider-Ansicht)",
+        BHT_HINT = "Klick auf einen Boss zeigt sein Info-Fenster so, wie es ein Raider sieht. Rolle und Klasse lassen sich zum Ausprobieren vortäuschen.",
+        BHT_ROLE = "Rolle:",
+        BHT_CLASS = "Klasse:",
+        BHT_REAL = "Echt",
+        BHT_NEED_TEST = "|cffffcc00BananaLoot Raider|r: Der Boss-Test geht nur im BananaLoot-Testlauf. Starte ihn zuerst in den BananaLoot-Optionen (Verwaltung > Testlauf starten).",
         BH_HIDE_BOSS = "Für diesen Boss nicht mehr anzeigen",
         BH_NO_ROLE_TEXT = "|cff888888Für deine Rolle gibt es hier keinen eigenen Hinweis.|r",
         BH_SECOND = "Zusatz:",
@@ -181,7 +190,7 @@ local LOCALE = {
             "/roll                  Hauptspec (1-100)\n" ..
             "/roll 1 99             Off-Spec\n" ..
             "/roll 1 98             Transmog",
-        CMD_HELP = "|cff33ff99BananaLoot Raider|r Befehle: /blr, /blr sr, /blr code [Code], /blr version, /blr options, /blr boss [Name|reset], /blr help",
+        CMD_HELP = "|cff33ff99BananaLoot Raider|r Befehle: /blr, /blr sr, /blr code [Code], /blr version, /blr options, /blr boss [Name|reset], /blr bosstest, /blr help",
 
         -- Minimap
         MM_TOOLTIP_LEFT = "Linksklick: Loot-Historie oeffnen",
@@ -270,8 +279,17 @@ local LOCALE = {
         BH_R_TANK = "Tank",
         BH_R_DD = "DPS",
         BH_R_HEAL = "Healer",
-        BH_SHOW_ALL = "All roles",
-        BH_SHOW_MINE = "My role only",
+        BH_SHOW_ALL = "Show all",
+        BH_SHOW_MINE = "Only for me",
+        BH_FOR_YOU = "FOR YOU",
+        BH_FOR_ALL = "For everyone",
+        BH_FOR_OTHERS = "For other roles/classes",
+        BHT_TITLE = "Boss test (Raider view)",
+        BHT_HINT = "Click a boss to see its info window the way a raider sees it. You can pretend a role and class to try them out.",
+        BHT_ROLE = "Role:",
+        BHT_CLASS = "Class:",
+        BHT_REAL = "Real",
+        BHT_NEED_TEST = "|cffffcc00BananaLoot Raider|r: The boss test only works during the BananaLoot test run. Start it first in the BananaLoot options (Management > Start test run).",
         BH_HIDE_BOSS = "Don't show again for this boss",
         BH_NO_ROLE_TEXT = "|cff888888There is no separate note for your role here.|r",
         BH_SECOND = "Addition:",
@@ -336,7 +354,7 @@ local LOCALE = {
             "/roll                  Main Spec (1-100)\n" ..
             "/roll 1 99             Off-Spec\n" ..
             "/roll 1 98             Transmog",
-        CMD_HELP = "|cff33ff99BananaLoot Raider|r Commands: /blr, /blr sr, /blr code [Code], /blr version, /blr options, /blr boss [Name|reset], /blr help",
+        CMD_HELP = "|cff33ff99BananaLoot Raider|r Commands: /blr, /blr sr, /blr code [Code], /blr version, /blr options, /blr boss [Name|reset], /blr bosstest, /blr help",
 
         MM_TOOLTIP_LEFT = "Left-click: open loot history",
         MM_TOOLTIP_RIGHT = "Right-click: settings",
@@ -917,6 +935,9 @@ SlashCmdList["BANANALOOTRAIDER"] = function(msg)
     elseif cmd == "prefetch off" or cmd == "prefetch on" then
         BananaLootRaider:SetPrefetchEnabled(cmd == "prefetch on")
         DEFAULT_CHAT_FRAME:AddMessage("|cff33ff99BananaLoot Raider|r: Prefetch " .. (cmd == "prefetch on" and "on" or "off"))
+
+    elseif cmd == "bosstest" then
+        if BananaLootRaider.OpenBossTest then BananaLootRaider:OpenBossTest() end
 
     elseif cmd == "boss" or string.find(cmd, "^boss ") then
         if BananaLootRaider.BossSlash then BananaLootRaider:BossSlash(Trim(string.sub(cmd, 5))) end

@@ -305,3 +305,7 @@ Vor einem Boss zeigt BananaLoot Raider ein kleines Fenster mit der Erklaerung fu
 v3.51+), sonst das Anvisieren des Bosses. Schliessen per X oder bei Kampfbeginn. Haken "Fuer
 diesen Boss nicht mehr anzeigen" im Fenster; in den Optionen laesst sich die Funktion ganz
 abschalten und die Rolle festlegen. `/blr boss <Name>` = Vorschau, `/blr boss reset` = zuruecksetzen.
+
+Das Info-Fenster hebt oben "FUER DICH" hervor (Rolle und Klasse) und zeigt Saetze fuer andere Rollen gedaempft.
+Im BananaLoot-Testlauf gibt es eine Boss-Uebersicht (`/blr bosstest` oder BananaLoot > Optionen > Verwaltung >
+"Raider-Boss-Test"), in der man jeden Boss anklicken und Rolle/Klasse vortaeuschen kann.

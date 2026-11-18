@@ -70,10 +70,35 @@ function BananaLootRaider:DetectRole()
     return "dd"
 end
 
+-- Wer bin ich? Rolle (Einstellung oder Talente), Klasse und Talentbaum. Im Test-Fenster kann beides
+-- vorgetaeuscht werden (simRole / simClass), damit sich jede Rolle und Klasse ansehen laesst.
+local DEFAULT_ROLE = { PRIEST = "heal" }
+function BananaLootRaider:GetMyIdentity()
+    local _, class = UnitClass("player")
+    local spec = nil
+    if GetTalentTabInfo then
+        local bestPts = 0
+        for tab = 1, 3 do
+            local name, _, pts = GetTalentTabInfo(tab)
+            if (pts or 0) > bestPts then bestPts = pts; spec = name end
+        end
+    end
+    if self.simClass then class = self.simClass; spec = nil end
+    local role, auto
+    local r = self.simRole or self:GetBossHelpRole()
+    if r == "tank" or r == "dd" or r == "heal" then
+        role, auto = r, false
+    elseif self.simClass then
+        role, auto = DEFAULT_ROLE[class] or "dd", true
+    else
+        role, auto = self:DetectRole(), true
+    end
+    return role, auto, class, spec
+end
+
 function BananaLootRaider:GetMyRole()
-    local r = self:GetBossHelpRole()
-    if r == "tank" or r == "dd" or r == "heal" then return r, false end
-    return self:DetectRole(), true
+    local role, auto = self:GetMyIdentity()
+    return role, auto
 end
 
 -- ------------------------------------------------------------
@@ -168,32 +193,137 @@ end
 
 local ROLE_KEY = { tank = "BH_R_TANK", dd = "BH_R_DD", heal = "BH_R_HEAL" }
 
--- Fertigen Anzeigetext fuer eine Rolle bauen (showAll = alle Rollen).
-function BananaLootRaider:BuildBossBody(text, role, showAll)
+-- Satzweise Zuordnung: welche Rollen/Klassen spricht ein Satz an? (Stichworte im Text)
+local ROLE_WORDS = {
+    tank = { "Tank", "Taunt", "taunt", "Aggro", "wegdrehen", "Rücken zur Wand", "Off-Tank" },
+    heal = { "Heiler", "heilen", "Heilung", "überheilen" },
+    dd = { "DD", "Melee", "Nahkämpfer", "Nahkampf", "Ranged", "Fernkämpfer", "Fernkampf", "Zauberwirker", "Caster" },
+}
+local CLASS_WORDS = {
+    HUNTER = { "Hunter", "Jäger", "Tranquilizing" },
+    MAGE = { "Magier", "Mage" },
+    DRUID = { "Druide", "Druid " },
+    PRIEST = { "Priester", "Fear Ward", "Mind Control" },
+    SHAMAN = { "Schamane", "Tremor Totem" },
+    PALADIN = { "Paladin" },
+    WARRIOR = { "Krieger" },
+    ROGUE = { "Schurke", "Rogue" },
+    WARLOCK = { "Hexenmeister", "Warlock" },
+}
+-- Faehigkeiten, die bestimmte Klassen ausfuehren (ohne dass die Klasse im Text genannt wird)
+local ACTION_CLASSES = {
+    { "decurs", { "DRUID", "MAGE" } },
+    { "dispell", { "PRIEST", "PALADIN" } },
+    { "purg", { "PRIEST", "SHAMAN" } },
+    { "cleans", { "PALADIN", "DRUID", "SHAMAN" } },
+    { "unterbrech", { "ROGUE", "WARRIOR", "MAGE", "SHAMAN" } },
+    { "stunn", { "ROGUE", "WARRIOR", "PALADIN" } },
+}
+
+local function HasWord(sentence, list)
+    for i = 1, table.getn(list) do
+        if string.find(sentence, list[i], 1, true) then return true end
+    end
+    return false
+end
+
+-- Rueckgabe: roles = { tank=true, ... }, classes = { HUNTER=true, ... } (nil, wenn nichts)
+function BananaLootRaider:TagSentence(sentence)
+    local roles, classes, any = {}, {}, false
+    local sn = string.gsub(sentence, "Druids of the Talon", "")   -- Gegner, nicht die Klasse
+    for role, list in pairs(ROLE_WORDS) do
+        if HasWord(sn, list) then roles[role] = true; any = true end
+    end
+    for class, list in pairs(CLASS_WORDS) do
+        if HasWord(sn, list) then classes[class] = true; any = true end
+    end
+    for i = 1, table.getn(ACTION_CLASSES) do
+        local act = ACTION_CLASSES[i]
+        if string.find(sn, act[1], 1, true) then
+            for k = 1, table.getn(act[2]) do classes[act[2][k]] = true end
+            any = true
+        end
+    end
+    return roles, classes, any
+end
+
+-- Text in Saetze teilen (Abkuerzungen wie "ca." und "Sek." bleiben zusammen)
+local function SplitSentences(text)
+    local t = string.gsub(text, "ca%.", "ca\\1")
+    t = string.gsub(t, "Sek%.", "Sek\\1")
+    t = string.gsub(t, "Min%.", "Min\\1")
+    t = string.gsub(t, "z%.B%.", "zB\\1")
+    local out = {}
+    local init = 1
+    while init <= string.len(t) do
+        local s, e = string.find(t, "[.!?]%s+", init)
+        local piece
+        if s then piece = string.sub(t, init, s); init = e + 1 else piece = string.sub(t, init); init = string.len(t) + 1 end
+        piece = string.gsub(piece, "\\1", ".")
+        piece = string.gsub(piece, "^%s+", "")
+        piece = string.gsub(piece, "%s+$", "")
+        if piece ~= "" then table.insert(out, piece) end
+    end
+    return out
+end
+
+-- Teilt einen Boss-Text in Items { text, roles, classes, general } (bei "Tank:/DDs:/Heiler:"-Abschnitten
+-- gilt die Rolle des Abschnitts fuer alle seine Saetze).
+function BananaLootRaider:ClassifyText(text)
+    local items = {}
     local intro, segs = self:SplitRoles(text)
-    if not segs or showAll then
-        if not segs then return text end
-        local out = intro ~= "" and (intro .. "\n") or ""
-        for i = 1, table.getn(segs) do
-            local sg = segs[i]
-            local label = sg.role == "all" and "Alle" or BananaLootRaider:L(ROLE_KEY[sg.role])
-            out = out .. "|cffffd100" .. label .. ":|r " .. sg.text .. "\n"
-        end
-        return out
-    end
-    local out = intro ~= "" and (intro .. "\n") or ""
-    local mine = false
-    for i = 1, table.getn(segs) do
-        local sg = segs[i]
-        if sg.role == "all" then
-            out = out .. "|cffffd100Alle:|r " .. sg.text .. "\n"
-        elseif sg.role == role then
-            mine = true
-            out = out .. "|cffffd100" .. BananaLootRaider:L(ROLE_KEY[role]) .. ":|r " .. sg.text .. "\n"
+    local function addSentences(str, segRole)
+        local sentences = SplitSentences(str)
+        for i = 1, table.getn(sentences) do
+            local roles, classes, any = self:TagSentence(sentences[i])
+            if segRole and segRole ~= "all" then roles[segRole] = true; any = true end
+            table.insert(items, { text = sentences[i], roles = roles, classes = classes, tagged = any, seg = segRole })
         end
     end
-    -- ohne eigenen Abschnitt: steht schon ein allgemeiner Text (intro/Alle) da, braucht es keinen Hinweis
-    if not mine and out == "" then out = out .. BananaLootRaider:L("BH_NO_ROLE_TEXT") .. "\n" end
+    if segs then
+        if intro ~= "" then addSentences(intro, nil) end
+        for i = 1, table.getn(segs) do addSentences(segs[i].text, segs[i].role) end
+    else
+        addSentences(text, nil)
+    end
+    return items
+end
+
+-- Ist der Satz fuer mich (Rolle oder Klasse)?
+local function IsForMe(item, role, class)
+    if item.roles[role] then return true end
+    if class and item.classes[class] then return true end
+    return false
+end
+
+-- Fertigen Anzeigetext bauen: oben "FUER DICH" (hervorgehoben), darunter allgemeine Saetze, zuletzt - gedaempft - Saetze,
+-- die nur andere Rollen/Klassen betreffen (onlyMine blendet die letzten beiden Gruppen aus).
+function BananaLootRaider:BuildBossBody(text, role, class, onlyMine)
+    if type(class) == "boolean" then onlyMine = class; class = nil end   -- aeltere Aufrufe: (text, role, showAll)
+    local items = self:ClassifyText(text)
+    local mine, general, other = {}, {}, {}
+    for i = 1, table.getn(items) do
+        local it = items[i]
+        if IsForMe(it, role, class) then table.insert(mine, it)
+        elseif not it.tagged or it.seg == "all" then table.insert(general, it)
+        else table.insert(other, it) end
+    end
+    local out = ""
+    if table.getn(mine) > 0 then
+        out = out .. "|cff33ff99" .. self:L("BH_FOR_YOU") .. "|r\n"
+        for i = 1, table.getn(mine) do out = out .. "|cffffd100> " .. mine[i].text .. "|r\n" end
+    end
+    if table.getn(general) > 0 then
+        if table.getn(mine) > 0 then out = out .. "|cffaaaaaa" .. self:L("BH_FOR_ALL") .. "|r\n" end
+        for i = 1, table.getn(general) do out = out .. general[i].text .. "\n" end
+    end
+    if table.getn(mine) == 0 and table.getn(general) == 0 and table.getn(other) > 0 and onlyMine then
+        out = out .. self:L("BH_NO_ROLE_TEXT") .. "\n"
+    end
+    if table.getn(other) > 0 and not onlyMine then
+        out = out .. "|cff777777" .. self:L("BH_FOR_OTHERS") .. "|r\n"
+        for i = 1, table.getn(other) do out = out .. "|cff888888" .. other[i].text .. "|r\n" end
+    end
     return out
 end
 
@@ -246,7 +376,7 @@ F.allBtn:SetHeight(20)
 F.allBtn:SetPoint("TOPRIGHT", F, "TOPRIGHT", -22, -58)
 F.allBtn:SetScript("OnClick", function()
     BananaLootRaider:PlayClickSound()
-    F.showAll = not F.showAll
+    F.onlyMine = not F.onlyMine
     BananaLootRaider:RefreshBossFrame()
 end)
 
@@ -270,19 +400,22 @@ end
 
 function BananaLootRaider:RefreshBossFrame()
     if not F.raidObj or not F.bossObj then return end
-    local role, auto = self:GetMyRole()
+    local role, auto, class, spec = self:GetMyIdentity()
     F.title:SetText(F.bossObj.label)
     F.raid:SetText(F.raidObj.name)
-    F.role:SetText(string.format(self:L("BH_ROLE"), "|cff33ff99" .. self:L(ROLE_KEY[role]) .. "|r") .. (auto and (" |cff888888(" .. self:L("BH_AUTO") .. ")|r") or ""))
-    F.allBtn:SetText(self:L(F.showAll and "BH_SHOW_MINE" or "BH_SHOW_ALL"))
+    local className = (LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[class]) or class or ""
+    local who = className .. ((spec and spec ~= "") and (" - " .. spec) or "")
+    F.role:SetText(string.format(self:L("BH_ROLE"), "|cff33ff99" .. self:L(ROLE_KEY[role]) .. "|r")
+        .. "  |cffaaaaaa(" .. who .. (auto and (", " .. self:L("BH_AUTO")) or "") .. ")|r")
+    F.allBtn:SetText(self:L(F.onlyMine and "BH_SHOW_ALL" or "BH_SHOW_MINE"))
     F.hideLabel:SetText(self:L("BH_HIDE_BOSS"))
     local body = ""
     local m1 = self:GetBossText(F.raidObj.key, F.bossObj, "m1")
-    if m1 ~= "" then body = self:BuildBossBody(m1, role, F.showAll) end
+    if m1 ~= "" then body = self:BuildBossBody(m1, role, class, F.onlyMine) end
     if F.showSecond then
         local m2 = self:GetBossText(F.raidObj.key, F.bossObj, "m2")
         if m2 ~= "" then
-            body = body .. "\n|cff88ccff" .. self:L("BH_SECOND") .. "|r\n" .. self:BuildBossBody(m2, role, F.showAll)
+            body = body .. "\n|cff88ccff" .. self:L("BH_SECOND") .. "|r\n" .. self:BuildBossBody(m2, role, class, F.onlyMine)
         end
     end
     body = string.gsub(body, "%s+$", "")
@@ -304,7 +437,7 @@ function BananaLootRaider:ShowBossHelp(raid, boss, field, force)
     end
     local same = F:IsShown() and F.key == key
     F.raidObj, F.bossObj, F.key = raid, boss, key
-    if not same then F.showAll = false; F.showSecond = false end
+    if not same then F.onlyMine = false; F.showSecond = false end
     if field == "m2" then F.showSecond = true end
     self.bossShown[key] = GetTime()
     self:RefreshBossFrame()
