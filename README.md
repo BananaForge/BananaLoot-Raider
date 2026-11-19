@@ -309,3 +309,12 @@ abschalten und die Rolle festlegen. `/blr boss <Name>` = Vorschau, `/blr boss re
 Das Info-Fenster hebt oben "FUER DICH" hervor (Rolle und Klasse) und zeigt Saetze fuer andere Rollen gedaempft.
 Im BananaLoot-Testlauf gibt es eine Boss-Uebersicht (`/blr bosstest` oder BananaLoot > Optionen > Verwaltung >
 "Raider-Boss-Test"), in der man jeden Boss anklicken und Rolle/Klasse vortaeuschen kann.
+
+
+## SR+ Liste
+
+Knopf "SR+ Liste" im Hauptfenster (oder `/blr srlist`): alle vom Loot-Master per BananaLoot synchronisierten
+Raids (mit < > blaettern), die Items alphabetisch, daneben wer das Item auf SR hat und wie viel SR+ jeder hat.
+Mit der Maus ueber einem Item: Item-Daten und komplette Liste. Dieselbe Liste erscheint als Zusatz im Tooltip der
+SR-Auswahlliste und im Item-Fenster beim Anklicken eines Item-Links aus dem Raidchat. "Neu anfragen" fordert die
+Uebersicht beim Loot-Master an (Raid/Gruppe und Gilde).

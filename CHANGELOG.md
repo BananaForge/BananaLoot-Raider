@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.17
+
+- Neu: **SR+ Liste** (Knopf "SR+ Liste" im Hauptfenster, `/blr srlist`). Zeigt die vom Loot-Master per BananaLoot synchronisierten Raids (mit < > blaettern, aktiver Raid zuerst): alle Items **alphabetisch**, daneben wer das Item auf SR hat und wie viel SR+ jeder hat. Mit der Maus ueber einem Item erscheinen die Item-Daten und die komplette Liste. "Neu anfragen" fordert die Uebersicht beim Loot-Master an.
+- Neu: **Tooltip in der SR-Auswahlliste** (Fenster "SR einreichen"): unter den Item-Daten steht, wer das Item schon reserviert hat und mit wie viel SR+.
+- Neu: **Item-Link im Raidchat anklicken**: das Item-Fenster zeigt zusaetzlich die SR+ Liste dieses Items (nur fuer Items, die zuletzt im Raidchat gepostet wurden; im Raid-Chat-Fall gilt nur der Raidchat, in einer 5er-Gruppe der Gruppenchat; im Testlauf bei jedem Item).
+- Die Daten kommen ohne Einstellung bei jedem an (Raid/Gruppe und Gilde); die letzten 14 Raids werden gespeichert.
+
 ## v1.16
 
 - Aenderung: Das 3D-Modell im Boss-Fenster ist entfernt (Kalibrierung, Animation, Modell-Liste, Option). An seiner Stelle steht ein ruhiges **Bild**: das Symbol eines besonderen Drops des Bosses (aus der Beute-Tabelle, bevorzugt ein bosstypisches Item hoher Qualitaet); Bosse ohne Beutedaten zeigen ein Totenkopf-Symbol. Die Bilder kommen aus dem Spiel selbst - es werden keine Bilddateien mitgeliefert.

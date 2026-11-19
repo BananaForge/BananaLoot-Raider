@@ -441,7 +441,7 @@ BananaLootRaider_UI:UpdateLangButtons()
 -- Obere Buttonzeile (jeder Button haengt am vorherigen, in dieser Reihenfolge erzeugt):
 -- Optionen | SR einreichen (Raid-Code) | Whisper-SR | ?
 local historyOptBtn = CreateFrame("Button", "BananaLootRaiderHistoryOptBtn", historyFrame, "UIPanelButtonTemplate")
-historyOptBtn:SetWidth(96)
+historyOptBtn:SetWidth(80)
 historyOptBtn:SetHeight(22)
 historyOptBtn:SetPoint("TOPLEFT", historyFrame, "TOPLEFT", 20, -44)
 historyOptBtn:SetText(BananaLootRaider:L("UI_BTN_OPTIONS"))
@@ -452,7 +452,7 @@ end)
 
 -- SR einreichen: oeffnet das Raid-Code-Fenster (wie "/blr code")
 local historySubmitBtn = CreateFrame("Button", "BananaLootRaiderHistorySubmitBtn", historyFrame, "UIPanelButtonTemplate")
-historySubmitBtn:SetWidth(130)
+historySubmitBtn:SetWidth(112)
 historySubmitBtn:SetHeight(22)
 historySubmitBtn:SetPoint("LEFT", historyOptBtn, "RIGHT", 6, 0)
 historySubmitBtn:SetText(BananaLootRaider:L("UI_BTN_SR_SUBMIT"))
@@ -469,7 +469,7 @@ historySubmitBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
 -- Whisper-SR: das bisherige Sende-Fenster (sr/unsr per Shift-Klick an den Loot-Master)
 local historySrBtn = CreateFrame("Button", "BananaLootRaiderHistorySrBtn", historyFrame, "UIPanelButtonTemplate")
-historySrBtn:SetWidth(100)
+historySrBtn:SetWidth(86)
 historySrBtn:SetHeight(22)
 historySrBtn:SetPoint("LEFT", historySubmitBtn, "RIGHT", 6, 0)
 historySrBtn:SetText(BananaLootRaider:L("UI_BTN_SR_WHISPER"))
@@ -478,10 +478,27 @@ historySrBtn:SetScript("OnClick", function()
     if BananaLootRaider_UI.ToggleSR then BananaLootRaider_UI:ToggleSR() end
 end)
 
+-- SR+ Liste: Uebersicht aller Reservierungen samt SR+ (vom Loot-Master synchronisiert)
+local historyListBtn = CreateFrame("Button", "BananaLootRaiderHistoryListBtn", historyFrame, "UIPanelButtonTemplate")
+historyListBtn:SetWidth(76)
+historyListBtn:SetHeight(22)
+historyListBtn:SetPoint("LEFT", historySrBtn, "RIGHT", 6, 0)
+historyListBtn:SetText(BananaLootRaider:L("SRL_BTN"))
+historyListBtn:SetScript("OnClick", function()
+    BananaLootRaider:PlayClickSound()
+    if BananaLootRaider.ToggleSRList then BananaLootRaider:ToggleSRList() end
+end)
+historyListBtn:SetScript("OnEnter", function()
+    GameTooltip:SetOwner(historyListBtn, "ANCHOR_BOTTOM")
+    GameTooltip:SetText(BananaLootRaider:L("SRL_BTN_TIP"), 1, 1, 1, 1, 1)
+    GameTooltip:Show()
+end)
+historyListBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
 local historyHelpBtn = CreateFrame("Button", "BananaLootRaiderHistoryHelpBtn", historyFrame, "UIPanelButtonTemplate")
-historyHelpBtn:SetWidth(28)
+historyHelpBtn:SetWidth(26)
 historyHelpBtn:SetHeight(22)
-historyHelpBtn:SetPoint("LEFT", historySrBtn, "RIGHT", 6, 0)
+historyHelpBtn:SetPoint("LEFT", historyListBtn, "RIGHT", 6, 0)
 historyHelpBtn:SetText("?")
 historyHelpBtn:SetScript("OnClick", function()
     BananaLootRaider:PlayClickSound()
@@ -1033,6 +1050,8 @@ function BananaLootRaider_UI:ApplyLocaleAll()
     if self.RefreshHistory then self:RefreshHistory() end
     historySubmitBtn:SetText(BananaLootRaider:L("UI_BTN_SR_SUBMIT"))
     historySrBtn:SetText(BananaLootRaider:L("UI_BTN_SR_WHISPER"))
+    historyListBtn:SetText(BananaLootRaider:L("SRL_BTN"))
+    if BananaLootRaider.RefreshSRList then BananaLootRaider:RefreshSRList() end
     if BananaLootRaider.ApplyLocaleCode then BananaLootRaider:ApplyLocaleCode() end
     if self.ApplyLocale then self:ApplyLocale() end
     if self.ApplyLocaleExtra then self:ApplyLocaleExtra() end

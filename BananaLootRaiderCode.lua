@@ -554,6 +554,11 @@ F.list:SetScript("OnMouseWheel", function() F.slider:SetValue(F.slider:GetValue(
 
 function R.ShowTooltip(owner, id)
     BananaLootRaider:ShowItemTooltip(owner, id, "ANCHOR_RIGHT")
+    -- unter den Item-Daten: wer das Item schon reserviert hat und mit wie viel SR+
+    if BananaLootRaider.AppendSRLines then
+        BananaLootRaider:AppendSRLines(GameTooltip, id)
+        GameTooltip:Show()
+    end
 end
 
 for i = 1, NUM_ROWS do

@@ -11,7 +11,7 @@
 -- Vergabe und keine Loot-Fenster-Logik.
 
 BananaLootRaider = {}
-BananaLootRaider.VERSION = "1.16"
+BananaLootRaider.VERSION = "1.17"
 
 -- Ordnername des Addons im Spiel (der Download von GitHub heisst "BananaLoot-Raider", die Anleitung "BananaLootRaider"):
 -- aus dem Dateipfad des Aufrufstapels gelesen, damit Icons/Logo in beiden Faellen gefunden werden.
@@ -124,6 +124,20 @@ local LOCALE = {
         -- Geteilte Loot-Historie
         WIN_HISTORY_TITLE = "Loot-Historie",
         WIN_HISTORY_HINT = "Nur fuer diese Session -- wird nicht gespeichert. Gruppiert nach Boss/Mob (anklicken zum Auf-/Zuklappen). Zeigt Vergaben eines Lootmasters mit aktiviertem Roll-Sync. Bankreserve-Vergaben erscheinen hier bewusst nicht.",
+        SRL_TITLE = "SR+ Übersicht",
+        SRL_BTN = "SR+ Liste",
+        SRL_BTN_TIP = "Zeigt, wer welches Item auf SR hat und wie viel SR+ jeder hat (vom Loot-Master per BananaLoot synchronisiert).",
+        SRL_REQUEST = "Neu anfragen",
+        SRL_REQUESTED = "|cff33ff99BananaLoot Raider|r: SR+-Übersicht beim Loot-Master angefragt.",
+        SRL_HINT = "Mit dem Mauszeiger über einem Item siehst du die Item-Daten und die komplette Liste.",
+        SRL_NONE = "|cff888888Noch keine Daten. Der Loot-Master muss BananaLoot nutzen und die Übersicht synchronisieren (beim Raid-Start oder per \"Raider-Sync\"). Mit \"Neu anfragen\" kannst du sie anfordern.|r",
+        SRL_INFO = "%d Items - von %s - Stand: %s",
+        SRL_NOW = "gerade eben",
+        SRL_MIN = "vor %d Min.",
+        SRL_HOURS = "vor %d Std.",
+        SRL_TIP_HEAD = "SR+ Liste (%s)",
+        SRL_TIP_NONE = "Noch niemand reserviert",
+        SRL_TIP_MORE = "+%d weitere",
         HISTORY_UNKNOWN_SOURCE = "Unbekannte Quelle",
         BH_ROLE = "Deine Rolle: %s",
         BH_AUTO = "automatisch erkannt",
@@ -208,7 +222,7 @@ local LOCALE = {
             "/roll                  Hauptspec (1-100)\n" ..
             "/roll 1 99             Off-Spec\n" ..
             "/roll 1 98             Transmog",
-        CMD_HELP = "|cff33ff99BananaLoot Raider|r Befehle: /blr, /blr sr, /blr code [Code], /blr version, /blr options, /blr boss [Name|reset], /blr bosstest, /blr help",
+        CMD_HELP = "|cff33ff99BananaLoot Raider|r Befehle: /blr, /blr sr, /blr code [Code], /blr version, /blr options, /blr boss [Name|reset], /blr bosstest, /blr srlist, /blr help",
 
         -- Minimap
         MM_TOOLTIP_LEFT = "Linksklick: Loot-Historie oeffnen",
@@ -291,6 +305,20 @@ local LOCALE = {
 
         WIN_HISTORY_TITLE = "Loot History",
         WIN_HISTORY_HINT = "Current session only -- not saved. Grouped by boss/mob (click to expand/collapse). Shows awards from a loot master with roll-sync enabled. Bank reserve awards deliberately don't appear here.",
+        SRL_TITLE = "SR+ overview",
+        SRL_BTN = "SR+ list",
+        SRL_BTN_TIP = "Shows who has which item on SR and how much SR+ each person has (synced from the loot master via BananaLoot).",
+        SRL_REQUEST = "Ask again",
+        SRL_REQUESTED = "|cff33ff99BananaLoot Raider|r: asked the loot master for the SR+ overview.",
+        SRL_HINT = "Hover an item to see its data and the complete list.",
+        SRL_NONE = "|cff888888No data yet. The loot master must use BananaLoot and sync the overview (at raid start or with \"Raider sync\"). Use \"Ask again\" to request it.|r",
+        SRL_INFO = "%d items - from %s - as of: %s",
+        SRL_NOW = "just now",
+        SRL_MIN = "%d min ago",
+        SRL_HOURS = "%d h ago",
+        SRL_TIP_HEAD = "SR+ list (%s)",
+        SRL_TIP_NONE = "Nobody has reserved it yet",
+        SRL_TIP_MORE = "+%d more",
         HISTORY_UNKNOWN_SOURCE = "Unknown source",
         BH_ROLE = "Your role: %s",
         BH_AUTO = "detected automatically",
@@ -372,7 +400,7 @@ local LOCALE = {
             "/roll                  Main Spec (1-100)\n" ..
             "/roll 1 99             Off-Spec\n" ..
             "/roll 1 98             Transmog",
-        CMD_HELP = "|cff33ff99BananaLoot Raider|r Commands: /blr, /blr sr, /blr code [Code], /blr version, /blr options, /blr boss [Name|reset], /blr bosstest, /blr help",
+        CMD_HELP = "|cff33ff99BananaLoot Raider|r Commands: /blr, /blr sr, /blr code [Code], /blr version, /blr options, /blr boss [Name|reset], /blr bosstest, /blr srlist, /blr help",
 
         MM_TOOLTIP_LEFT = "Left-click: open loot history",
         MM_TOOLTIP_RIGHT = "Right-click: settings",
@@ -868,6 +896,11 @@ function BananaLootRaider:HandleRollSyncMessage(text, sender)
         return
     end
 
+    if (msgType == "OB" or msgType == "OI" or msgType == "OE") and BananaLootRaider.HandleOverviewMessage then
+        BananaLootRaider:HandleOverviewMessage(msgType, fields, sender)
+        return
+    end
+
     if not self:GetRollSyncEnabled() then return end
 
     if (msgType == "BT" or msgType == "BA" or msgType == "BB") and BananaLootRaider.HandleBossMessage then
@@ -953,6 +986,9 @@ SlashCmdList["BANANALOOTRAIDER"] = function(msg)
     elseif cmd == "prefetch off" or cmd == "prefetch on" then
         BananaLootRaider:SetPrefetchEnabled(cmd == "prefetch on")
         DEFAULT_CHAT_FRAME:AddMessage("|cff33ff99BananaLoot Raider|r: Prefetch " .. (cmd == "prefetch on" and "on" or "off"))
+
+    elseif cmd == "srlist" or cmd == "sr+" or cmd == "srplus" then
+        if BananaLootRaider.ToggleSRList then BananaLootRaider:ToggleSRList() end
 
     elseif cmd == "bosstest" then
         if BananaLootRaider.OpenBossTest then BananaLootRaider:OpenBossTest() end
