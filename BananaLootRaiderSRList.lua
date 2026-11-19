@@ -29,6 +29,45 @@ BananaLootRaider.srStage = {}          -- ["Sender:id"] = Raid im Aufbau (zwisch
 BananaLootRaider.raidChatItems = {}    -- [itemID] = GetTime() des letzten Item-Links im Raidchat
 local MAX_OVERVIEWS = 14
 local MAX_AGE = 30 * 24 * 3600
+local ACTIVE_AGE = 15 * 60                 -- "aktiv" gilt nur fuer Uebersichten, die juenger sind
+
+-- Name des Loot-Masters der Gruppe (nil = keiner/unbekannt)
+local function LootMasterName()
+    if not GetLootMethod then return nil end
+    local method, partyID, raidID = GetLootMethod()
+    if method ~= "master" then return nil end
+    if GetNumRaidMembers() > 0 then
+        if raidID and raidID > 0 then
+            local n = GetRaidRosterInfo(raidID)
+            return n
+        end
+    elseif partyID then
+        if partyID == 0 then return UnitName("player") end
+        return UnitName("party" .. partyID)
+    end
+    return nil
+end
+
+local function SenderInGroup(name)
+    if BananaLoot and BananaLoot.testMode then return true end
+    if not name then return false end
+    if name == UnitName("player") then return true end
+    for i = 1, GetNumRaidMembers() do
+        if UnitName("raid" .. i) == name then return true end
+    end
+    for i = 1, GetNumPartyMembers() do
+        if UnitName("party" .. i) == name then return true end
+    end
+    return false
+end
+
+-- Ist die gespeicherte Uebersicht wirklich der gerade laufende Raid? (frisch + Sender in meiner Gruppe)
+local function IsEffectivelyActive(ov)
+    if not ov.active then return false end
+    if (time() - (ov.time or 0)) > ACTIVE_AGE then return false end
+    return SenderInGroup(ov.sender)
+end
+BananaLootRaider.IsOverviewActive = IsEffectivelyActive
 
 -- ------------------------------------------------------------
 -- Empfang
@@ -36,12 +75,20 @@ local MAX_AGE = 30 * 24 * 3600
 function BananaLootRaider:HandleOverviewMessage(msgType, fields, sender)
     local id = fields[2]
     if not id or not sender then return end
+    local ch = self.lastMsgChannel or "TEST"
+    -- im Raid/in der Gruppe zaehlt nur der Loot-Master als Quelle
+    if ch == "RAID" or ch == "PARTY" then
+        local master = LootMasterName()
+        if master and master ~= sender then return end
+    end
+    -- je Kanal getrennt aufbauen, damit sich Gilde und Raid nicht vermischen
     local key = sender .. ":" .. id
+    local skey = key .. ":" .. ch
     if msgType == "OB" then
-        self.srStage[key] = { id = id, sender = sender, active = (fields[3] == "A"),
-            raidKey = fields[4] or "", name = fields[5] or "", items = {} }
+        self.srStage[skey] = { id = id, sender = sender, active = (fields[3] == "A"),
+            raidKey = fields[4] or "", name = fields[5] or "", items = {}, channel = ch }
     elseif msgType == "OI" then
-        local st = self.srStage[key]
+        local st = self.srStage[skey]
         local itemID, part = tonumber(fields[3]), tonumber(fields[4])
         if not st or not itemID then return end
         if part == 1 or not st.items[itemID] then st.items[itemID] = {} end
@@ -51,9 +98,9 @@ function BananaLootRaider:HandleOverviewMessage(msgType, fields, sender)
             if n and n ~= "" then table.insert(st.items[itemID], { n = n, p = tonumber(p) or 0 }) end
         end
     elseif msgType == "OE" then
-        local st = self.srStage[key]
+        local st = self.srStage[skey]
         if not st then return end
-        self.srStage[key] = nil
+        self.srStage[skey] = nil
         st.time = time()
         local d = DB()
         d.srOverview[key] = st
@@ -77,7 +124,10 @@ function BananaLootRaider:GetOverviewList()
     local list = {}
     for k, v in pairs(DB().srOverview) do table.insert(list, v) end
     table.sort(list, function(a, b)
-        if (a.active and 1 or 0) ~= (b.active and 1 or 0) then return a.active and true or false end
+        local aa, ba = IsEffectivelyActive(a), IsEffectivelyActive(b)
+        if aa ~= ba then return aa end
+        local master = LootMasterName()
+        if master and (a.sender == master) ~= (b.sender == master) then return a.sender == master end
         return (a.time or 0) > (b.time or 0)
     end)
     return list
@@ -327,7 +377,7 @@ function BananaLootRaider:RefreshSRList()
         return
     end
     F.empty:SetText("")
-    F.raidName:SetText(OverviewName(ov) .. (ov.active and (" |cff33ff99*|r") or ""))
+    F.raidName:SetText(OverviewName(ov) .. (IsEffectivelyActive(ov) and (" |cff33ff99*|r") or ""))
     local ids, count = {}, 0
     for id in pairs(ov.items) do table.insert(ids, id) end
     table.sort(ids, function(a, b)
@@ -364,3 +414,25 @@ function BananaLootRaider:ToggleSRList()
     if F:IsShown() then F:Hide() else T.idx = 1; F:Show() end
 end
 BananaLootRaider.srListState = T
+
+-- ------------------------------------------------------------
+-- Beim Betreten eines Raids/einer Gruppe automatisch die Uebersicht anfragen
+-- ------------------------------------------------------------
+local joinFrame = CreateFrame("Frame", "BananaLootRaiderSRJoinFrame")
+joinFrame:RegisterEvent("RAID_ROSTER_UPDATE")
+joinFrame:RegisterEvent("PARTY_MEMBERS_CHANGED")
+joinFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+local wasGrouped, joinAt = false, nil
+joinFrame:SetScript("OnEvent", function()
+    local grouped = (GetNumRaidMembers() > 0) or (GetNumPartyMembers() > 0)
+    if grouped and (not wasGrouped or event == "PLAYER_ENTERING_WORLD") then joinAt = GetTime() + 4 end
+    wasGrouped = grouped
+end)
+joinFrame:SetScript("OnUpdate", function()
+    if joinAt and GetTime() >= joinAt then
+        joinAt = nil
+        if (GetNumRaidMembers() > 0) or (GetNumPartyMembers() > 0) then
+            BananaLootRaider:RequestSROverview("cur")
+        end
+    end
+end)

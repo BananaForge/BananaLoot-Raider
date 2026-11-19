@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.18
+
+- Fix: **"Aktiv" (Stern) in der SR+ Liste** gilt nur noch fuer Uebersichten, die hoechstens 15 Minuten alt sind und deren Sender in der eigenen Gruppe ist. Vorher blieb ein alter Raid bis zu 30 Tage "aktiv" und verdraengte neuere Raids im Tooltip.
+- Fix: **Quelle**: Im Raid/in der Gruppe werden Uebersichten nur vom Loot-Master angenommen; bei der Auswahl hat der Loot-Master Vorrang.
+- Fix: Gilde und Raid werden beim Empfang getrennt zusammengesetzt (keine doppelten Eintraege mehr, wenn beide Sendungen gleichzeitig ankommen).
+- Neu: Beim Betreten eines Raids/einer Gruppe bzw. nach dem Einloggen fragt der Raider die Uebersicht automatisch an.
+
 ## v1.17
 
 - Neu: **SR+ Liste** (Knopf "SR+ Liste" im Hauptfenster, `/blr srlist`). Zeigt die vom Loot-Master per BananaLoot synchronisierten Raids (mit < > blaettern, aktiver Raid zuerst): alle Items **alphabetisch**, daneben wer das Item auf SR hat und wie viel SR+ jeder hat. Mit der Maus ueber einem Item erscheinen die Item-Daten und die komplette Liste. "Neu anfragen" fordert die Uebersicht beim Loot-Master an.

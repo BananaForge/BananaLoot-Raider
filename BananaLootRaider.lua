@@ -11,7 +11,7 @@
 -- Vergabe und keine Loot-Fenster-Logik.
 
 BananaLootRaider = {}
-BananaLootRaider.VERSION = "1.17"
+BananaLootRaider.VERSION = "1.18"
 
 -- Ordnername des Addons im Spiel (der Download von GitHub heisst "BananaLoot-Raider", die Anleitung "BananaLootRaider"):
 -- aus dem Dateipfad des Aufrufstapels gelesen, damit Icons/Logo in beiden Faellen gefunden werden.
@@ -933,9 +933,11 @@ eventFrame:SetScript("OnEvent", function()
     elseif event == "CHAT_MSG_ADDON" then
         if arg1 == ROLL_SYNC_PREFIX then
             -- Raid-Code-Antworten (SR-Status/-Bestaetigung, siehe BananaLootRaiderCode.lua)
+            BananaLootRaider.lastMsgChannel = arg3
             if not (BananaLootRaider.HandleCodeMessage and BananaLootRaider:HandleCodeMessage(arg2, arg4, arg3)) then
                 BananaLootRaider:HandleRollSyncMessage(arg2, arg4)
             end
+            BananaLootRaider.lastMsgChannel = nil
         end
 
     elseif event == "RAID_ROSTER_UPDATE" or event == "PARTY_MEMBERS_CHANGED" then
