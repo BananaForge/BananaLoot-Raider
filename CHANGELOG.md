@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.19
+
+- Neu: **Raids ohne BananaLoot.** Beim Betreten einer Gruppe fragt Raider per `HQ` nach BananaLoot (Antwort nach ca. 8 s ausgewertet). Findet sich keines, werden **"SR einreichen" und "SR+ Liste" ausgegraut** (sichtbar, aber nicht klickbar; Hinweis im Tooltip und unten im Hauptfenster). Sobald doch BananaLoot-Nachrichten aus der Gruppe kommen, sind sie wieder aktiv.
+- Neu: **RollFor-Unterstuetzung** (https://github.com/sica42/RollFor), ohne dass RollFor installiert sein muss. Raider liest die Addon-Nachrichten des RollFor-Loot-Masters mit (Praefix `RollFor`: START_ROLL, ROLL, TIE, FINISH, CANCEL_ROLL, AWARDED, auch in Teilen) und zeigt MS/OS/TM-Wuerfe, Gewinner und Countdown im bekannten **Sync-Fenster**. Die Beute-Ansage von RollFor im Raidchat (`1. [Item] (HR)` / `2. [Item] (SR by Name [2 rolls] (+3), ...)`) wird gelesen und ergaenzt die Tooltips (SR/SR+/HR je Item).
+- Neu: Dieselbe Raid-ID: erhaelt Raider denselben Raid (gleiche ID, z.B. nach einem Discord-Import durch einen Vertreter) von einem anderen Sender, gilt der **neuere** Stand; ein aelterer ersetzt keinen neueren.
+
 ## v1.18
 
 - Fix: **"Aktiv" (Stern) in der SR+ Liste** gilt nur noch fuer Uebersichten, die hoechstens 15 Minuten alt sind und deren Sender in der eigenen Gruppe ist. Vorher blieb ein alter Raid bis zu 30 Tage "aktiv" und verdraengte neuere Raids im Tooltip.

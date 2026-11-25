@@ -82,11 +82,12 @@ function BananaLootRaider:HandleOverviewMessage(msgType, fields, sender)
         if master and master ~= sender then return end
     end
     -- je Kanal getrennt aufbauen, damit sich Gilde und Raid nicht vermischen
-    local key = sender .. ":" .. id
-    local skey = key .. ":" .. ch
+    local key = id                                   -- derselbe Raid (gleiche Raid-ID) ersetzt sich, egal wer ihn sendet
+    local skey = sender .. ":" .. id .. ":" .. ch
     if msgType == "OB" then
         self.srStage[skey] = { id = id, sender = sender, active = (fields[3] == "A"),
-            raidKey = fields[4] or "", name = fields[5] or "", items = {}, channel = ch }
+            raidKey = fields[4] or "", name = fields[5] or "", items = {}, channel = ch,
+            stamp = tonumber(fields[6]) or 0 }
     elseif msgType == "OI" then
         local st = self.srStage[skey]
         local itemID, part = tonumber(fields[3]), tonumber(fields[4])
@@ -103,6 +104,9 @@ function BananaLootRaider:HandleOverviewMessage(msgType, fields, sender)
         self.srStage[skey] = nil
         st.time = time()
         local d = DB()
+        local old = d.srOverview[key]
+        -- ein aelterer Stand eines anderen Senders ersetzt keinen neueren (z.B. Vertreter mit altem Import)
+        if old and old.sender ~= st.sender and (old.stamp or 0) > (st.stamp or 0) then return end
         d.srOverview[key] = st
         -- aufraeumen: zu alte und ueberzaehlige Raids entfernen
         local keys = {}
@@ -146,6 +150,9 @@ BananaLootRaider.OverviewName = OverviewName
 
 -- Zusatzzeilen fuer einen Tooltip: wer hat das Item auf SR, mit wie viel SR+
 function BananaLootRaider:AppendSRLines(tip, itemID)
+    if self.raidMode ~= "bananaloot" and self.AppendRollForLines and tip and self:AppendRollForLines(tip, itemID) then
+        return true   -- Raid ohne BananaLoot: SR/HR-Info aus der RollFor-Ansage im Raidchat
+    end
     local ov = self:GetBestOverview()
     if not ov or not tip then return false end
     local list = ov.items[itemID]

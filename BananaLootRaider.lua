@@ -11,7 +11,7 @@
 -- Vergabe und keine Loot-Fenster-Logik.
 
 BananaLootRaider = {}
-BananaLootRaider.VERSION = "1.18"
+BananaLootRaider.VERSION = "1.19"
 
 -- Ordnername des Addons im Spiel (der Download von GitHub heisst "BananaLoot-Raider", die Anleitung "BananaLootRaider"):
 -- aus dem Dateipfad des Aufrufstapels gelesen, damit Icons/Logo in beiden Faellen gefunden werden.
@@ -127,6 +127,13 @@ local LOCALE = {
         SRL_TITLE = "SR+ Übersicht",
         SRL_BTN = "SR+ Liste",
         SRL_BTN_TIP = "Zeigt, wer welches Item auf SR hat und wie viel SR+ jeder hat (vom Loot-Master per BananaLoot synchronisiert).",
+        RF_DISABLED_TIP = "In diesem Raid nutzt der Loot-Master kein BananaLoot - diese Funktion ist hier nicht verfügbar.",
+        RF_NO_BL = "|cffff9933BananaLoot Raider|r: In dieser Gruppe wurde kein BananaLoot gefunden. \"SR einreichen\" und die \"SR+ Liste\" sind ausgegraut.",
+        RF_NO_BL_ROLLFOR = "|cffff9933BananaLoot Raider|r: Kein BananaLoot, aber RollFor erkannt - Rolls (MS/OS/TM) erscheinen im Sync-Fenster, SR/HR aus der Raidchat-Ansage im Tooltip. \"SR einreichen\" und \"SR+ Liste\" sind ausgegraut.",
+        RF_LABEL_NONE = "Kein BananaLoot in dieser Gruppe: SR einreichen und SR+ Liste nicht verfügbar.",
+        RF_LABEL_RF = "RollFor erkannt: Sync-Fenster aktiv. SR einreichen und SR+ Liste nicht verfügbar.",
+        RF_TIP_HEAD = "SR/HR (RollFor-Ansage im Raidchat):",
+        RF_TIP_HR = "Hard Reserve",
         SRL_REQUEST = "Neu anfragen",
         SRL_REQUESTED = "|cff33ff99BananaLoot Raider|r: SR+-Übersicht beim Loot-Master angefragt.",
         SRL_HINT = "Mit dem Mauszeiger über einem Item siehst du die Item-Daten und die komplette Liste.",
@@ -308,6 +315,13 @@ local LOCALE = {
         SRL_TITLE = "SR+ overview",
         SRL_BTN = "SR+ list",
         SRL_BTN_TIP = "Shows who has which item on SR and how much SR+ each person has (synced from the loot master via BananaLoot).",
+        RF_DISABLED_TIP = "The loot master of this raid does not use BananaLoot - this function is not available here.",
+        RF_NO_BL = "|cffff9933BananaLoot Raider|r: No BananaLoot found in this group. \"Submit SR\" and the \"SR+ list\" are greyed out.",
+        RF_NO_BL_ROLLFOR = "|cffff9933BananaLoot Raider|r: No BananaLoot, but RollFor detected - rolls (MS/OS/TM) show up in the sync window, SR/HR from the raid chat announcement in the tooltip. \"Submit SR\" and \"SR+ list\" are greyed out.",
+        RF_LABEL_NONE = "No BananaLoot in this group: submitting SR and the SR+ list are not available.",
+        RF_LABEL_RF = "RollFor detected: sync window active. Submitting SR and the SR+ list are not available.",
+        RF_TIP_HEAD = "SR/HR (RollFor raid chat announcement):",
+        RF_TIP_HR = "Hard Reserve",
         SRL_REQUEST = "Ask again",
         SRL_REQUESTED = "|cff33ff99BananaLoot Raider|r: asked the loot master for the SR+ overview.",
         SRL_HINT = "Hover an item to see its data and the complete list.",
@@ -862,6 +876,12 @@ function BananaLootRaider:HandleRollSyncMessage(text, sender)
     local isSelf = (sender == UnitName("player"))
     local fields = Split(text, "~")
     local msgType = fields[1]
+    -- Nachrichten, die nur BananaLoot (Loot-Master) schickt: dieser Raid nutzt BananaLoot
+    if not isSelf and self.NoteBananaLoot and (msgType == "RS" or msgType == "RU" or msgType == "RT" or msgType == "RW"
+        or msgType == "RC" or msgType == "AW" or msgType == "OB" or msgType == "OI" or msgType == "OE"
+        or msgType == "BT" or msgType == "BA" or msgType == "BB") then
+        self:NoteBananaLoot(self.lastMsgChannel or "TEST")
+    end
 
     if msgType == "AW" then
         if not isSelf and BananaLootRaider_UI and BananaLootRaider_UI.AddHistoryEntry then
@@ -938,6 +958,9 @@ eventFrame:SetScript("OnEvent", function()
                 BananaLootRaider:HandleRollSyncMessage(arg2, arg4)
             end
             BananaLootRaider.lastMsgChannel = nil
+        elseif arg1 == "RollFor" and BananaLootRaider_RollFor then
+            -- RollFor (anderes Loot-Addon): Rolls/SR mitlesen, auch ohne installiertes RollFor
+            BananaLootRaider_RollFor.HandleAddonMessage(arg2, arg4)
         end
 
     elseif event == "RAID_ROSTER_UPDATE" or event == "PARTY_MEMBERS_CHANGED" then

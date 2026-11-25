@@ -318,3 +318,12 @@ Raids (mit < > blaettern), die Items alphabetisch, daneben wer das Item auf SR h
 Mit der Maus ueber einem Item: Item-Daten und komplette Liste. Dieselbe Liste erscheint als Zusatz im Tooltip der
 SR-Auswahlliste und im Item-Fenster beim Anklicken eines Item-Links aus dem Raidchat. "Neu anfragen" fordert die
 Uebersicht beim Loot-Master an (Raid/Gruppe und Gilde).
+
+
+## Raids ohne BananaLoot / RollFor
+
+Beim Betreten einer Gruppe fragt Raider per Addon-Nachricht nach BananaLoot (Auswertung nach ca. 8 Sekunden). Nutzt der Loot-Master
+kein BananaLoot, sind **"SR einreichen" und "SR+ Liste" ausgegraut** (sichtbar, aber nicht nutzbar; Hinweis im Tooltip und im Fenster).
+Raider liest dann mit, was das Addon **RollFor** des Loot-Masters verteilt (RollFor muss nicht installiert sein): Rolls (MS/OS/TM), Gewinner
+und Countdown erscheinen im Sync-Fenster; SR/SR+/HR aus der Beute-Ansage im Raidchat (`1. [Item] (HR)`, `2. [Item] (SR by Name (+3))`) ergaenzen die Tooltips.
+Der Raid-Wechsel zurueck in einen BananaLoot-Raid schaltet die Funktionen automatisch wieder frei.

@@ -183,6 +183,10 @@ function BananaLootRaider:HandleCodeMessage(text, sender, channel)
         return false
     end
     -- nur fuer BananaLoot bestimmt
+    -- SC/SS/SH/SA/HA kommen nur von BananaLoot selbst (Loot-Master): dieser Raid nutzt BananaLoot
+    if (t == "SC" or t == "SS" or t == "SH" or t == "SA" or t == "HA") and self.NoteBananaLoot then
+        self:NoteBananaLoot(channel or "TEST")
+    end
     -- HQ: "wer hat BananaLoot?" -- BananaLoot Raider antwortet mit seiner Version (RV), leicht
     -- verzoegert, damit nicht alle Antworten gleichzeitig kommen (BananaLoot: /bl version)
     if t == "HQ" then
